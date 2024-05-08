@@ -1,19 +1,11 @@
 #include <Novice.h>
 #include "Matrix4x4Func.h"
+#include "Vector3Func.h"
 
-static const int kRowHeight = 20;
-static const int kColumnWidth = 60;
+const int kWindowWidth = 1280;
+const int kWindowHeight = 720;
 
 
-void MatrixScreeenPrintf(int x, int y, Matrix4x4 matrix, const char* text) {
-	Novice::ScreenPrintf(x, y, "%s", text);
-	for (int row = 0; row < 4; ++row) {
-		for (int column = 0; column < 4; ++column) {
-			Novice::ScreenPrintf(x + column * kColumnWidth,
-				y + (row + 1) * kRowHeight, "%6.2f", matrix.m[row][column]);
-		}
-	}
-}
 
 const char kWindowTitle[] = "LC1A_27_ヤマグチ_タクト_タイトル";
 
@@ -23,12 +15,30 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// ライブラリの初期化
 	Novice::Initialize(kWindowTitle, 1280, 720);
 
-	Matrix4x4 orthographicMatrix =
-		MakeOrthographicMatrix(-160.0f, 160.0f, 200.0f, 300.0f, 0.0f, 1000.0f);
-	Matrix4x4 perspectiveFovMatrix =
-		MakePrespectiveFovMatrix(0.63f, 1.33f, 0.1f, 1000.0f);
-	Matrix4x4 viewportMatrix =
-		MakeViewportMatrix(100.0f, 200.0f, 600.0f, 300.0f, 0.0f, 1.0f);
+	Vector3 v1{ 1.2f,-3.9f,2.5f };
+	Vector3 v2{ 2.8f,0.4f,-1.3f };
+	Vector3 cross = Cross(v1, v2);
+
+	Vector3 rotate{};
+	Vector3 translate{};
+	const Vector3 kLocalVertices[3] = {
+		{0.0f,0.2f,0.0f},
+		{0.2f, -0.2f,0.0f},
+		{-0.2f,-0.2f,0.0f}
+	};
+	Vector3 cametaPosition{ 0,0,-1.0f };
+
+	Matrix4x4 worldMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, rotate, translate);
+	Matrix4x4 cameraMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, { 0.0f,0.0f,0.0f }, cametaPosition);
+	Matrix4x4 viewMatrix = Inverse(cameraMatrix);
+	Matrix4x4 projectionMatrix = MakePrespectiveFovMatrix(0.45f, float(kWindowWidth) / float(kWindowHeight), 0.1f, 100.0f);
+	Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
+	Matrix4x4 viewportMatrix = MakeViewportMatrix(0, 0, float(kWindowWidth), float(kWindowHeight), 0.0f, 1.0f);
+	Vector3 screenVertices[3];
+	for (uint32_t i = 0; i < 3; ++i) {
+		Vector3 ndcVertex = Transform(kLocalVertices[i], worldViewProjectionMatrix);
+		screenVertices[i] = Transform(ndcVertex, viewportMatrix);
+	}
 
 	// キー入力結果を受け取る箱
 	char keys[256] = {0};
@@ -47,6 +57,26 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓更新処理ここから
 		///
 
+		if (keys[DIK_A]) {
+			rotate.y += 0.03f;
+		}
+		if (keys[DIK_D]) {
+			rotate.y -= 0.03f;
+		}
+		if (keys[DIK_W]) {
+			translate.z += 0.03f;
+		}
+		if (keys[DIK_S]) {
+			translate.z -= 0.03f;
+		}
+
+		worldMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, rotate, translate);
+		worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
+		for (uint32_t i = 0; i < 3; ++i) {
+			Vector3 ndcVertex = Transform(kLocalVertices[i], worldViewProjectionMatrix);
+			screenVertices[i] = Transform(ndcVertex, viewportMatrix);
+		}
+
 		///
 		/// ↑更新処理ここまで
 		///
@@ -54,9 +84,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ↓描画処理ここから
 		///
-		MatrixScreeenPrintf(0, 0, orthographicMatrix, "orthographicMatrix");
-		MatrixScreeenPrintf(0, kRowHeight * 5, perspectiveFovMatrix, "perspectiveFovMatrix");
-		MatrixScreeenPrintf(0, kRowHeight * 5 * 2, viewportMatrix, "viewportMatrix");
+		
+		Novice::ScreenPrintf(0, 0, "%.02f %.02f %.02f Cross", cross.x, cross.y, cross.z);
+		Novice::DrawTriangle(int(screenVertices[0].x), int(screenVertices[0].y), int(screenVertices[1].x), int(screenVertices[1].y),
+			int(screenVertices[2].x), int(screenVertices[2].y), RED, kFillModeSolid);
+
+
 		///
 		/// ↑描画処理ここまで
 		///
