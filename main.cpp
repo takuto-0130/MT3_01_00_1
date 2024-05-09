@@ -76,6 +76,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			Vector3 ndcVertex = Transform(kLocalVertices[i], worldViewProjectionMatrix);
 			screenVertices[i] = Transform(ndcVertex, viewportMatrix);
 		}
+		Vector3 ab = { screenVertices[1].x - screenVertices[0].x,screenVertices[1].y - screenVertices[0].y,screenVertices[1].z - screenVertices[0].z };
+		Vector3 bc = { screenVertices[2].x - screenVertices[1].x,screenVertices[2].y - screenVertices[1].y,screenVertices[2].z - screenVertices[1].z };
+		Vector3 cross1 = Cross(ab, bc);
+		Vector3 cross2 = Cross({ 0,float(kWindowHeight),0 }, { float(kWindowWidth),0,0 });
 
 		///
 		/// ↑更新処理ここまで
@@ -86,8 +90,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		
 		Novice::ScreenPrintf(0, 0, "%.02f %.02f %.02f Cross", cross.x, cross.y, cross.z);
-		Novice::DrawTriangle(int(screenVertices[0].x), int(screenVertices[0].y), int(screenVertices[1].x), int(screenVertices[1].y),
-			int(screenVertices[2].x), int(screenVertices[2].y), RED, kFillModeSolid);
+		if((cross1.x * cross2.x + cross1.y * cross2.y + cross1.z * cross2.z) <= 0)
+		{
+			Novice::DrawTriangle(int(screenVertices[0].x), int(screenVertices[0].y), int(screenVertices[1].x), int(screenVertices[1].y),
+				int(screenVertices[2].x), int(screenVertices[2].y), RED, kFillModeSolid);
+		}
 
 
 		///
