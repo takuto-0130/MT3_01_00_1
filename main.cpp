@@ -50,7 +50,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	};
 
 	Matrix4x4 pointSphereMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, {0,0,0}, pointSphere.center);
+	Matrix4x4 pointSphereViewMatrix = Inverse(pointSphereMatrix);
+
 	Matrix4x4 closestPointSphereMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, { 0,0,0 }, closestPointSphere.center);
+	Matrix4x4 closestPointSphereViewMatrix = Inverse(closestPointSphereMatrix);
 
 	Vector3 start = Transform(Transform(segment.origine, worldViewProjectionMatrix), viewportMatrix);
 	Vector3 end = Transform(Transform(Add(segment.origine, segment.diff), worldViewProjectionMatrix), viewportMatrix);
@@ -91,10 +94,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ↓描画処理ここから
 		///
-		
+		worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 		Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), WHITE);
+		worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(pointSphereViewMatrix, projectionMatrix));
 		DrawSphere(pointSphere, worldViewProjectionMatrix, viewportMatrix, RED);
+		worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(closestPointSphereViewMatrix, projectionMatrix));
 		DrawSphere(closestPointSphere, worldViewProjectionMatrix, viewportMatrix, BLACK);
 
 		///
