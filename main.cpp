@@ -50,10 +50,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	};
 
 	Matrix4x4 pointSphereMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, {0,0,0}, pointSphere.center);
-	Matrix4x4 pointSphereViewMatrix = Inverse(pointSphereMatrix);
 
 	Matrix4x4 closestPointSphereMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, { 0,0,0 }, closestPointSphere.center);
-	Matrix4x4 closestPointSphereViewMatrix = Inverse(closestPointSphereMatrix);
 
 	Vector3 start = Transform(Transform(segment.origine, worldViewProjectionMatrix), viewportMatrix);
 	Vector3 end = Transform(Transform(Add(segment.origine, segment.diff), worldViewProjectionMatrix), viewportMatrix);
@@ -83,9 +81,19 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("segment.diff", &segment.diff.x, 0.01f);
 		ImGui::InputFloat3("p", &project.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
 		ImGui::End();
+
 		cameraMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, cametaPosition);
 		viewMatrix = Inverse(cameraMatrix);
+
 		worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
+
+		closestPoint = ClosestPoint(point, segment);
+		closestPointSphere.center = closestPoint;
+
+		pointSphereMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, { 0,0,0 }, pointSphere.center);
+		closestPointSphereMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, { 0,0,0 }, closestPointSphere.center);
+		start = Transform(Transform(segment.origine, worldViewProjectionMatrix), viewportMatrix);
+		end = Transform(Transform(Add(segment.origine, segment.diff), worldViewProjectionMatrix), viewportMatrix);
 
 		///
 		/// ↑更新処理ここまで
@@ -97,9 +105,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 		Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), WHITE);
-		worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(pointSphereViewMatrix, projectionMatrix));
+		worldViewProjectionMatrix = Multiply(pointSphereMatrix, Multiply(viewMatrix, projectionMatrix));
 		DrawSphere(pointSphere, worldViewProjectionMatrix, viewportMatrix, RED);
-		worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(closestPointSphereViewMatrix, projectionMatrix));
+		worldViewProjectionMatrix = Multiply(closestPointSphereMatrix, Multiply(viewMatrix, projectionMatrix));
 		DrawSphere(closestPointSphere, worldViewProjectionMatrix, viewportMatrix, BLACK);
 
 		///
