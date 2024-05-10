@@ -16,3 +16,17 @@ Vector3 Normalize(const Vector3& v) {
     Vector3 result{ v.x / len, v.y / len, v.z / len };
     return result;
 }
+
+float Dot(const Vector3& v1, const Vector3& v2) {
+    return (v1.x * v2.x + v1.y * v2.y + v1.z * v2.z);
+}
+
+Vector3 Subtruct(const Vector3& v1, const Vector3& v2) {
+    return{ v1.x - v2.x, v1.y - v2.y, v1.z - v2.z };
+}
+
+Vector3 Add(const Vector3& v1, const Vector3& v2) {
+    return{ v1.x + v2.x, v1.y + v2.y, v1.z + v2.z };
+
+
+}
