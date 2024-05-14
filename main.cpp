@@ -90,6 +90,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		closestPoint = ClosestPoint(point, segment);
 		closestPointSphere.center = closestPoint;
 
+		pointSphere.center = point;
+
 		pointSphereMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, { 0,0,0 }, pointSphere.center);
 		closestPointSphereMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, { 0,0,0 }, closestPointSphere.center);
 		start = Transform(Transform(segment.origine, worldViewProjectionMatrix), viewportMatrix);
