@@ -10,7 +10,7 @@ Vector3 Project(const Vector3& v1, const Vector3& v2) {
 };
 
 Vector3 ClosestPoint(const Vector3& point, const Segment& segment) {
-	Vector3 project = Project(Subtruct(point, segment.origine), segment.diff);
+	Vector3 project = Project(point - segment.origine, segment.diff);
 	return { segment.origine.x + project.x, segment.origine.y + project.y, segment.origine.z + project.z };
 };
 
