@@ -36,27 +36,22 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Matrix4x4 viewportMatrix = MakeViewportMatrix(0, 0, float(kWindowWidth), float(kWindowHeight), 0.0f, 1.0f);
 
 
-	Segment segment{ {-2.0f,-1.0f,0.0f},{3.0f,2.0f,2.0f} };
-	Vector3 point{ -1.5f,0.6f,0.6f };
-	Vector3 closestPoint = ClosestPoint(point, segment);
-	Sphere pointSphere{
-		point,
-		0.01f
+	Vector3 point1{ -1.5f,0.0f,0.0f };
+	Vector3 point2{ 1.5f,0,0 };
+	Sphere sphere1{
+		point1,
+		1.0f
+	};
+	uint32_t sphere1Color = WHITE;
+
+	Sphere sphere2{
+		point2,
+		1.0f
 	};
 
-	Sphere closestPointSphere{
-		closestPoint,
-		0.01f
-	};
+	Matrix4x4 sphere1Matrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, {0,0,0}, sphere1.center);
 
-	Matrix4x4 pointSphereMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, {0,0,0}, pointSphere.center);
-
-	Matrix4x4 closestPointSphereMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, { 0,0,0 }, closestPointSphere.center);
-
-	Vector3 start = Transform(Transform(segment.origine, worldViewProjectionMatrix), viewportMatrix);
-	Vector3 end = Transform(Transform(Add(segment.origine, segment.diff), worldViewProjectionMatrix), viewportMatrix);
-
-	Vector3 project = Project(Subtruct(point, segment.origine), segment.diff);
+	Matrix4x4 sphere2Matrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, { 0,0,0 }, sphere2.center);
 
 	// キー入力結果を受け取る箱
 	char keys[256] = {0};
@@ -76,10 +71,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 
 		ImGui::Begin("Window");
-		ImGui::DragFloat3("Point", &point.x, 0.01f);
-		ImGui::DragFloat3("segment.origine.x", &segment.origine.x, 0.01f);
-		ImGui::DragFloat3("segment.diff", &segment.diff.x, 0.01f);
-		ImGui::InputFloat3("p", &project.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
+		ImGui::DragFloat3("Point", &point1.x, 0.01f);
+		ImGui::DragFloat3("closestPoint", &point2.x, 0.01f);
 		ImGui::End();
 
 		cameraMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, cametaPosition);
@@ -87,15 +80,19 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 
-		closestPoint = ClosestPoint(point, segment);
-		closestPointSphere.center = closestPoint;
+		sphere2.center = point2;
 
-		pointSphere.center = point;
+		sphere1.center = point1;
 
-		pointSphereMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, { 0,0,0 }, pointSphere.center);
-		closestPointSphereMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, { 0,0,0 }, closestPointSphere.center);
-		start = Transform(Transform(segment.origine, worldViewProjectionMatrix), viewportMatrix);
-		end = Transform(Transform(Add(segment.origine, segment.diff), worldViewProjectionMatrix), viewportMatrix);
+		sphere1Matrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, { 0,0,0 }, sphere1.center);
+		sphere2Matrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, { 0,0,0 }, sphere2.center);
+
+		if (Length(sphere1.center - sphere2.center) <= sphere1.radius + sphere2.radius) {
+			sphere1Color = RED;
+		}
+		else {
+			sphere1Color = WHITE;
+		}
 
 		///
 		/// ↑更新処理ここまで
@@ -104,11 +101,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ↓描画処理ここから
 		///
-		worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
+		
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
-		Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), WHITE);
-		DrawSphere(pointSphere, Multiply(pointSphereMatrix, Multiply(viewMatrix, projectionMatrix)), viewportMatrix, RED);
-		DrawSphere(closestPointSphere, Multiply(closestPointSphereMatrix, Multiply(viewMatrix, projectionMatrix)), viewportMatrix, BLACK);
+		DrawSphere(sphere1, Multiply(sphere1Matrix, Multiply(viewMatrix, projectionMatrix)), viewportMatrix, sphere1Color);
+		DrawSphere(sphere2, Multiply(sphere2Matrix, Multiply(viewMatrix, projectionMatrix)), viewportMatrix, WHITE);
 
 		///
 		/// ↑描画処理ここまで
