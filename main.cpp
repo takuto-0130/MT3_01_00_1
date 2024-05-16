@@ -107,10 +107,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 		Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), WHITE);
-		worldViewProjectionMatrix = Multiply(pointSphereMatrix, Multiply(viewMatrix, projectionMatrix));
-		DrawSphere(pointSphere, worldViewProjectionMatrix, viewportMatrix, RED);
-		worldViewProjectionMatrix = Multiply(closestPointSphereMatrix, Multiply(viewMatrix, projectionMatrix));
-		DrawSphere(closestPointSphere, worldViewProjectionMatrix, viewportMatrix, BLACK);
+		DrawSphere(pointSphere, Multiply(pointSphereMatrix, Multiply(viewMatrix, projectionMatrix)), viewportMatrix, RED);
+		DrawSphere(closestPointSphere, Multiply(closestPointSphereMatrix, Multiply(viewMatrix, projectionMatrix)), viewportMatrix, BLACK);
 
 		///
 		/// ↑描画処理ここまで
