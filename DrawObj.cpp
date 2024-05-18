@@ -41,7 +41,6 @@ void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, con
 	const uint32_t kSubdivision = 16;
 	const float kLonEvery = float(M_PI) * 2.0f / kSubdivision;
 	const float kLatEvery = float(M_PI) / kSubdivision;
-
 	for (uint32_t latIndex = 0; latIndex < kSubdivision; ++latIndex) {
 		float lat = -float(M_PI) / 2.0f + kLatEvery * latIndex;
 		for (uint32_t lonIndex = 0; lonIndex < kSubdivision; ++lonIndex) {
@@ -49,9 +48,9 @@ void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, con
 			Vector3 a = { (cosf(lat) * cosf(lon)) * sphere.radius, (sinf(lat)) * sphere.radius, (cosf(lat) * sinf(lon)) * sphere.radius };
 			Vector3 b = { (cosf(lat + kLatEvery) * cosf(lon)) * sphere.radius, (sinf(lat + kLatEvery)) * sphere.radius, (cosf(lat + kLatEvery) * sinf(lon)) * sphere.radius };
 			Vector3 c = { (cosf(lat) * cosf(lon + kLonEvery)) * sphere.radius, (sinf(lat)) * sphere.radius, (cosf(lat) * sinf(lon + kLonEvery)) * sphere.radius };
-			Vector3 ndcAVertex = Transform(a, viewProjectionMatrix);
-			Vector3 ndcBVertex = Transform(b, viewProjectionMatrix);
-			Vector3 ndcCVertex = Transform(c, viewProjectionMatrix);
+			Vector3 ndcAVertex = Transform(a + sphere.center, viewProjectionMatrix);
+			Vector3 ndcBVertex = Transform(b + sphere.center, viewProjectionMatrix);
+			Vector3 ndcCVertex = Transform(c + sphere.center, viewProjectionMatrix);
 			Vector3 screenA = Transform(ndcAVertex, viewportMatrix);
 			Vector3 screenB = Transform(ndcBVertex, viewportMatrix);
 			Vector3 screenC = Transform(ndcCVertex, viewportMatrix);

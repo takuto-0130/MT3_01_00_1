@@ -20,3 +20,8 @@ struct Segment {
 	Vector3 origine;
 	Vector3 diff;
 };
+
+struct Plane {
+	Vector3 normal;
+	float distance;
+};

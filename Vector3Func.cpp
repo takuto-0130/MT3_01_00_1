@@ -27,10 +27,28 @@ Vector3 Subtruct(const Vector3& v1, const Vector3& v2) {
 
 Vector3 Add(const Vector3& v1, const Vector3& v2) {
     return{ v1.x + v2.x, v1.y + v2.y, v1.z + v2.z };
+}
 
+const Vector3 Multiply(const Vector3& v1, const Vector3& v2) {
+    return{ v1.x * v2.x, v1.y * v2.y, v1.z * v2.z };
+}
 
+const Vector3 Multiply(const Vector3& v, const float& s) {
+    return{ v.x * s, v.y * s, v.z * s };
+}
+
+const Vector3 Multiply(const float& s, const Vector3& v) {
+    return{ v.x * s, v.y * s, v.z * s };
 }
 
 Vector3 operator-(const Vector3& v1, const Vector3& v2) {
     return Subtruct(v1, v2);
+}
+
+Vector3 operator-(const Vector3& a) {
+    return { -a.x,-a.y,-a.z };
+}
+
+Vector3 operator+(const Vector3& v1, const Vector3& v2) {
+    return Add(v1, v2);
 }
