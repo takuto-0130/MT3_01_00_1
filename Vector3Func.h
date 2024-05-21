@@ -1,5 +1,6 @@
 #pragma once
 #include "Vector3.h"
+#include "ObjStruct.h"
 
 Vector3 Cross(const Vector3& v1, const Vector3& v2);
 
@@ -23,3 +24,13 @@ Vector3 operator-(const Vector3& a);
 
 
 Vector3 operator+(const Vector3& v1, const Vector3& v2);
+
+
+
+Vector3 Project(const Vector3& v1, const Vector3& v2);
+
+Vector3 ClosestPoint(const Vector3& point, const Segment& segment);
+
+bool IsCollision(const Sphere& sphere, const Plane& plane);
+
+Vector3 Parpendicular(const Vector3& vector);

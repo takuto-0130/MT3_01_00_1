@@ -17,6 +17,38 @@ Vector3 Normalize(const Vector3& v) {
     return result;
 }
 
+
+Vector3 Project(const Vector3& v1, const Vector3& v2) {
+	Vector3 v2Normalize = Normalize(v2);
+	float dot = Dot(v1, v2Normalize);
+	Vector3 result{ v2Normalize.x * dot, v2Normalize.y * dot, v2Normalize.z * dot };
+	return result;
+};
+
+Vector3 ClosestPoint(const Vector3& point, const Segment& segment) {
+	Vector3 project = Project(point - segment.origine, segment.diff);
+	return { segment.origine.x + project.x, segment.origine.y + project.y, segment.origine.z + project.z };
+};
+
+bool IsCollision(const Sphere& sphere, const Plane& plane) {
+	float distance = sqrtf((Dot(plane.normal, sphere.center) - plane.distance) * (Dot(plane.normal, sphere.center) - plane.distance));
+	if (distance <= sphere.radius) {
+		return true;
+	}
+	return false;
+}
+
+Vector3 Parpendicular(const Vector3& vector) {
+	if (vector.x != 0 || vector.y != 0) {
+		return { -vector.y,vector.x, 0.0f };
+	}
+	return { 0.0f,-vector.z,vector.y };
+}
+
+
+
+
+
 float Dot(const Vector3& v1, const Vector3& v2) {
     return (v1.x * v2.x + v1.y * v2.y + v1.z * v2.z);
 }
