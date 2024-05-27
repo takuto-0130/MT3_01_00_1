@@ -2,53 +2,12 @@
 #include <imgui.h>
 #include "DrawObj.h"
 
-
-Vector3 Project(const Vector3& v1, const Vector3& v2) {
-	Vector3 v2Normalize = Normalize(v2);
-	float dot = Dot(v1, v2Normalize);
-	Vector3 result{ v2Normalize.x * dot, v2Normalize.y * dot, v2Normalize.z * dot };
-	return result;
-};
-
-Vector3 ClosestPoint(const Vector3& point, const Segment& segment) {
-	Vector3 project = Project(point - segment.origine, segment.diff);
-	return { segment.origine.x + project.x, segment.origine.y + project.y, segment.origine.z + project.z };
-};
-
 bool IsCollision(const Sphere& sphere, const Plane& plane) {
 	float distance = sqrtf((Dot(plane.normal, sphere.center) - plane.distance) * (Dot(plane.normal, sphere.center) - plane.distance));
 	if (distance <= sphere.radius) {
 		return true;
 	}
 	return false;
-}
-
-Vector3 Parpendicular(const Vector3& vector) {
-	if (vector.x != 0 || vector.y != 0) {
-		return { -vector.y,vector.x, 0.0f };
-	}
-	return { 0.0f,-vector.z,vector.y };
-}
-
-void DrawPlane(const Plane& plane, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
-	Vector3 center = Multiply(plane.normal, plane.distance);
-	Vector3 perpendiculars[4];
-	perpendiculars[0] = Normalize(Parpendicular(plane.normal));
-	perpendiculars[1] = -perpendiculars[0];
-	perpendiculars[2] = Cross(plane.normal, perpendiculars[0]);
-	perpendiculars[3] = -perpendiculars[2];
-
-	Vector3 points[4];
-	for (int32_t index = 0; index < 4; ++index) {
-		Vector3 extend = Multiply(2.0f, perpendiculars[index]);
-		Vector3 point = Add(center, extend);
-		points[index] = Transform(Transform(point, viewProjectionMatrix), viewportMatrix);
-	}
-
-	Novice::DrawLine(int(points[0].x), int(points[0].y), int(points[2].x), int(points[2].y), color);
-	Novice::DrawLine(int(points[0].x), int(points[0].y), int(points[3].x), int(points[3].y), color);
-	Novice::DrawLine(int(points[1].x), int(points[1].y), int(points[2].x), int(points[2].y), color);
-	Novice::DrawLine(int(points[1].x), int(points[1].y), int(points[3].x), int(points[3].y), color);
 }
 
 bool IsCollisionLinePlane(const Segment& segment, const Plane& plane) {
@@ -69,6 +28,40 @@ bool IsCollisionSegmentPlane(const Segment& segment, const Plane& plane) {
 		return false;
 	}
 	return true;
+}
+
+bool IsCollisionSegmentTriangle(const Segment& segment, const Triangle& triangle) {
+	Vector3 v01 = triangle.vertixces[1] - triangle.vertixces[0];
+	Vector3 v12 = triangle.vertixces[2] - triangle.vertixces[1];
+	Vector3 v20 = triangle.vertixces[0] - triangle.vertixces[2];
+
+	Vector3 normal = Cross(v01, v12);
+	float distance = Dot(triangle.vertixces[0], normal);
+	Plane plane = {
+		normal,
+		distance
+	};
+	if (!(IsCollisionSegmentPlane(segment, plane))) {
+		return false;
+	}
+	float dot = Dot(segment.diff, plane.normal);
+	float t = (plane.distance - Dot(segment.origine, plane.normal)) / dot;
+	Vector3 point = ((segment.diff) * t) + segment.origine;
+
+	Vector3 v1p = point - triangle.vertixces[1];
+	Vector3 v2p = point - triangle.vertixces[2];
+	Vector3 v0p = point - triangle.vertixces[0];
+
+	Vector3 corss01 = Cross(v01, v1p);
+	Vector3 corss12 = Cross(v12, v2p);
+	Vector3 corss20 = Cross(v20, v0p);
+
+	if (Dot(corss01, normal) >= 0.0f &&
+		Dot(corss12, normal) >= 0.0f &&
+		Dot(corss20, normal) >= 0.0f) {
+		return true;
+	}
+	return false;
 }
 
 
@@ -99,10 +92,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Vector3 start = Transform(Transform(segment.origine, worldViewProjectionMatrix), viewportMatrix);
 	Vector3 end = Transform(Transform(Add(segment.origine, segment.diff), worldViewProjectionMatrix), viewportMatrix);
 
-	Plane plane{
-		{0.1f,0.1f,0.1f},
-		1.0f
-	};
+
+
+	Triangle triangle = {};
+	triangle.vertixces[0] = { 0.0f, 1.0f, 0.0f };
+	triangle.vertixces[1] = { 0.6f,0.0f,0.0f };
+	triangle.vertixces[2] = { -0.6f,0.0f,0.0f };
+
 
 	// キー入力結果を受け取る箱
 	char keys[256] = { 0 };
@@ -122,14 +118,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 
 		ImGui::Begin("Window");
-		ImGui::DragFloat3("plane.normal", &plane.normal.x, 0.01f);
 		ImGui::DragFloat3("segment.origine", &segment.origine.x, 0.01f);
 		ImGui::DragFloat3("segment.diff", &segment.diff.x, 0.01f);
+		ImGui::DragFloat3("triangle.vertixces[0]", &triangle.vertixces[0].x, 0.01f);
+		ImGui::DragFloat3("triangle.vertixces[1]", &triangle.vertixces[1].x, 0.01f);
+		ImGui::DragFloat3("triangle.vertixces[2]", &triangle.vertixces[2].x, 0.01f);
 		ImGui::DragFloat3("cameraRotate", &cameraRotate.x, 0.01f);
 		ImGui::DragFloat3("cametaPosition", &cametaPosition.x, 0.01f);
 		ImGui::DragFloat3("WorldRotate", &rotate.x, 0.01f);
 		ImGui::End();
-		plane.normal = Normalize(plane.normal);
 
 		worldMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, rotate, translate);
 
@@ -141,12 +138,32 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		start = Transform(Transform(segment.origine, worldViewProjectionMatrix), viewportMatrix);
 		end = Transform(Transform(Add(segment.origine, segment.diff), worldViewProjectionMatrix), viewportMatrix);
 
-		if (IsCollisionSegmentPlane(segment, plane)) {
+		if (IsCollisionSegmentTriangle(segment, triangle)) {
 			color = RED;
 		}
 		else {
 			color = WHITE;
 		}
+
+		////////
+		/*Vector3 v01 = triangle.vertixces[1] - triangle.vertixces[0];
+		Vector3 v12 = triangle.vertixces[2] - triangle.vertixces[1];
+		Vector3 v20 = triangle.vertixces[0] - triangle.vertixces[2];
+
+		Vector3 normal = Cross(v01, v12);
+		float distance = Dot(triangle.vertixces[0], normal);
+		Plane plane = {
+			normal,
+			distance
+		};
+		float dot = Dot(segment.diff, plane.normal);
+		float t = (plane.distance - Dot(segment.origine, plane.normal)) / dot;
+		Vector3 point = ((segment.diff) * t) + segment.origine;
+
+		Sphere sphere{
+			point,
+			0.1f
+		};*/
 
 		///
 		/// ↑更新処理ここまで
@@ -158,8 +175,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 		Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), color);
-		DrawPlane(plane, worldViewProjectionMatrix, viewportMatrix, WHITE);
-		//DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, sphere1Color);
+		DrawTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, color);
+		//DrawSphere(sphere, worldViewProjectionMatrix, viewportMatrix, color);
 		//DrawSphere(sphere2, Multiply(sphere2Matrix, Multiply(viewMatrix, projectionMatrix)), viewportMatrix, WHITE);
 
 		///

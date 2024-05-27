@@ -1,7 +1,14 @@
 #pragma once
 #include "Vector3.h"
+#include "ObjStruct.h"
 
 Vector3 Cross(const Vector3& v1, const Vector3& v2);
+
+Vector3 Project(const Vector3& v1, const Vector3& v2);
+
+Vector3 ClosestPoint(const Vector3& point, const Segment& segment);
+
+Vector3 Parpendicular(const Vector3& vector);
 
 float Length(const Vector3& v);
 
@@ -21,5 +28,8 @@ Vector3 operator-(const Vector3& a, const Vector3& b);
 
 Vector3 operator-(const Vector3& a);
 
-
 Vector3 operator+(const Vector3& v1, const Vector3& v2);
+
+Vector3 operator*(const Vector3& v, const float& s);
+
+Vector3 operator*(const float& s, const Vector3& v);

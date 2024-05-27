@@ -25,3 +25,7 @@ struct Plane {
 	Vector3 normal;
 	float distance;
 };
+
+struct Triangle {
+	Vector3 vertixces[3];
+};
