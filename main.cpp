@@ -93,6 +93,8 @@ void SoundPlayWave(IXAudio2* xAudio2, const SoundData& soundData, const X3DAUDIO
 	assert(SUCCEEDED(hr));
 	
 	IXAudio2Voice* pMasterVoice = masterVoice;
+	XAUDIO2_VOICE_DETAILS voiceDetalis;
+	pSourceVoice->GetVoiceDetails(&voiceDetalis);
 	pSourceVoice->SetOutputMatrix(pMasterVoice, 1, deviceDetails.InputChannels, DSPSettings.pMatrixCoefficients);
 	pSourceVoice->SetFrequencyRatio(DSPSettings.DopplerFactor);
 
@@ -106,7 +108,8 @@ void SoundPlayWave(IXAudio2* xAudio2, const SoundData& soundData, const X3DAUDIO
 	buf.pAudioData = soundData.pBuffer;
 	buf.AudioBytes = soundData.bufferSize;
 	buf.Flags = XAUDIO2_END_OF_STREAM;
-
+	FLOAT32 pan = -1.0f;
+	pSourceVoice->SetChannelVolumes(1, &pan);
 	hr = pSourceVoice->SubmitSourceBuffer(&buf);
 	hr = pSourceVoice->Start();
 }
@@ -157,7 +160,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	X3DAUDIO_DISTANCE_CURVE_POINT volumePoints[10] = {};
 	X3DAUDIO_DISTANCE_CURVE volumeCurve = {};
 
-	volumePoints[0].Distance = 0.0f;
+	/*volumePoints[0].Distance = 0.0f;
 	volumePoints[0].DSPSetting = 1.0f;
 	volumePoints[1].Distance = 0.2f;
 	volumePoints[1].DSPSetting = 1.0f;
@@ -188,7 +191,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	m_emitterCone.OuterAngle = X3DAUDIO_PI;
 	m_emitterCone.InnerVolume = 1.0f;
 	m_emitterCone.OuterVolume = 0.0f;
-	Emitter.pCone = &m_emitterCone;
+	Emitter.pCone = &m_emitterCone;*/
 
 	X3DAUDIO_DSP_SETTINGS DSPSettings = {};
 	FLOAT32* matrix = new FLOAT32[deviceDetails.InputChannels];
@@ -248,7 +251,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓更新処理ここから
 		///
 		frameCount++;
-		EmitterPosition = { point1.x,point1.y,point1.z };
+		EmitterPosition = { cametaPosition.x,cametaPosition.y,cametaPosition.z };
 		ListenerPosition = { cametaPosition.x,cametaPosition.y,cametaPosition.z };
 		//if (frameCount % 3 == 0) {
 			Emitter.OrientFront = EmitterOrientFront;
