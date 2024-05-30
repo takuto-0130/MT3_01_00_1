@@ -114,7 +114,7 @@ void SoundPlayWave(IXAudio2* xAudio2, const SoundData& soundData, const X3DAUDIO
 	hr = pSourceVoice->Start();
 }
 
-const char kWindowTitle[] = "LC1A_27_ヤマグチ_タクト_タイトル";
+const char kWindowTitle[] = "LE2A_18_ヤマグチ_タクト_タイトル";
 
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
@@ -149,11 +149,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//Emitter.InnerRadius = 0.3f;
 
 	X3DAUDIO_VECTOR EmitterOrientFront = { 0,0,-1 };
-	X3DAUDIO_VECTOR EmitterOrientTop = Emitter.OrientTop;
+	X3DAUDIO_VECTOR EmitterOrientTop = { 0,1,0 };
 	X3DAUDIO_VECTOR EmitterPosition = Emitter.Position;
 	X3DAUDIO_VECTOR EmitterVelocity = { 0,0,1 };
 	X3DAUDIO_VECTOR ListenerOrientFront = { 0,0,1 };
-	X3DAUDIO_VECTOR ListenerOrientTop = Listener.OrientTop;
+	X3DAUDIO_VECTOR ListenerOrientTop = { 0,1,0 };
 	X3DAUDIO_VECTOR ListenerPosition = Listener.Position;
 	X3DAUDIO_VECTOR ListenerVelocity = Listener.Velocity;
 
@@ -251,8 +251,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓更新処理ここから
 		///
 		frameCount++;
-		EmitterPosition = { cametaPosition.x,cametaPosition.y,cametaPosition.z };
-		ListenerPosition = { cametaPosition.x,cametaPosition.y,cametaPosition.z };
+		EmitterPosition = { point1.x,point1.y,point1.z };
+		ListenerPosition = { 0,0,0 };
 		//if (frameCount % 3 == 0) {
 			Emitter.OrientFront = EmitterOrientFront;
 			Emitter.OrientTop = EmitterOrientTop;
@@ -316,7 +316,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
-		DrawPlane(plane, worldViewProjectionMatrix, viewportMatrix, WHITE);
 		DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, sphere1Color);
 		//DrawSphere(sphere2, Multiply(sphere2Matrix, Multiply(viewMatrix, projectionMatrix)), viewportMatrix, WHITE);
 
