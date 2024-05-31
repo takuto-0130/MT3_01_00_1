@@ -88,3 +88,29 @@ void DrawTriangle(const Triangle& triangle, const Matrix4x4& viewProjectionMatri
 	}
 	Novice::DrawTriangle(int(points[0].x), int(points[0].y), int(points[1].x), int(points[1].y), int(points[2].x), int(points[2].y), color, kFillModeWireFrame);
 }
+
+void DrawAABB(const AABB& a, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
+	Vector3 p[8];
+	p[0] = Transform(Transform(a.min, viewProjectionMatrix), viewportMatrix);
+	p[1] = Transform(Transform({ a.max.x, a.min.y, a.min.z }, viewProjectionMatrix), viewportMatrix);
+	p[2] = Transform(Transform({ a.min.x, a.max.y, a.min.z }, viewProjectionMatrix), viewportMatrix);
+	p[3] = Transform(Transform({ a.max.x, a.max.y, a.min.z }, viewProjectionMatrix), viewportMatrix);
+	p[4] = Transform(Transform({ a.min.x, a.min.y, a.max.z }, viewProjectionMatrix), viewportMatrix);
+	p[5] = Transform(Transform({ a.max.x, a.min.y, a.max.z }, viewProjectionMatrix), viewportMatrix);
+	p[6] = Transform(Transform({ a.min.x, a.max.y, a.max.z }, viewProjectionMatrix), viewportMatrix);
+	p[7] = Transform(Transform({ a.max.x, a.max.y, a.max.z }, viewProjectionMatrix), viewportMatrix);
+	Novice::DrawLine(int(p[0].x), int(p[0].y), int(p[1].x), int(p[1].y), color);
+	Novice::DrawLine(int(p[0].x), int(p[0].y), int(p[2].x), int(p[2].y), color);
+	Novice::DrawLine(int(p[1].x), int(p[1].y), int(p[3].x), int(p[3].y), color);
+	Novice::DrawLine(int(p[2].x), int(p[2].y), int(p[3].x), int(p[3].y), color);
+
+	Novice::DrawLine(int(p[0 + 4].x), int(p[0 + 4].y), int(p[1 + 4].x), int(p[1 + 4].y), color);
+	Novice::DrawLine(int(p[0 + 4].x), int(p[0 + 4].y), int(p[2 + 4].x), int(p[2 + 4].y), color);
+	Novice::DrawLine(int(p[1 + 4].x), int(p[1 + 4].y), int(p[3 + 4].x), int(p[3 + 4].y), color);
+	Novice::DrawLine(int(p[2 + 4].x), int(p[2 + 4].y), int(p[3 + 4].x), int(p[3 + 4].y), color);
+
+	Novice::DrawLine(int(p[0].x), int(p[0].y), int(p[0 + 4].x), int(p[0 + 4].y), color);
+	Novice::DrawLine(int(p[1].x), int(p[1].y), int(p[1 + 4].x), int(p[1 + 4].y), color);
+	Novice::DrawLine(int(p[2].x), int(p[2].y), int(p[2 + 4].x), int(p[2 + 4].y), color);
+	Novice::DrawLine(int(p[3].x), int(p[3].y), int(p[3 + 4].x), int(p[3 + 4].y), color);
+}

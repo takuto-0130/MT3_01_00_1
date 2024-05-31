@@ -64,6 +64,15 @@ bool IsCollisionSegmentTriangle(const Segment& segment, const Triangle& triangle
 	return false;
 }
 
+bool IsCollisionAABB(const AABB& a, const AABB& b) {
+	if ((a.min.x <= b.max.x && a.max.x >= b.min.x) &&
+		(a.min.y <= b.max.y && a.max.y >= b.min.y) &&
+		(a.min.z <= b.max.z && a.max.z >= b.min.z)) {
+		return true;
+	}
+	return false;
+}
+
 
 const char kWindowTitle[] = "LE2A_18_ヤマグチ_タクト_タイトル";
 
@@ -88,17 +97,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	uint32_t color = WHITE;
 
-	Segment segment{ {-2.0f,-1.0f,0.0f},{3.0f,2.0f,2.0f} };
-	Vector3 start = Transform(Transform(segment.origine, worldViewProjectionMatrix), viewportMatrix);
-	Vector3 end = Transform(Transform(Add(segment.origine, segment.diff), worldViewProjectionMatrix), viewportMatrix);
+	AABB a{
+		{-0.6f,0,-0.3f},
+		{0,0.6f,0.3f}
+	};
 
-
-
-	Triangle triangle = {};
-	triangle.vertixces[0] = { 0.0f, 1.0f, 0.0f };
-	triangle.vertixces[1] = { 0.6f,0.0f,0.0f };
-	triangle.vertixces[2] = { -0.6f,0.0f,0.0f };
-
+	AABB b{
+		{0.5f,0,-0.3f},
+		{1.1f,0.6f,0.3f}
+	};
 
 	// キー入力結果を受け取る箱
 	char keys[256] = { 0 };
@@ -118,11 +125,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 
 		ImGui::Begin("Window");
-		ImGui::DragFloat3("segment.origine", &segment.origine.x, 0.01f);
-		ImGui::DragFloat3("segment.diff", &segment.diff.x, 0.01f);
-		ImGui::DragFloat3("triangle.vertixces[0]", &triangle.vertixces[0].x, 0.01f);
-		ImGui::DragFloat3("triangle.vertixces[1]", &triangle.vertixces[1].x, 0.01f);
-		ImGui::DragFloat3("triangle.vertixces[2]", &triangle.vertixces[2].x, 0.01f);
+		ImGui::DragFloat3("aMax", &a.max.x, 0.01f);
+		ImGui::DragFloat3("aMin", &a.min.x, 0.01f);
+		ImGui::DragFloat3("bMax", &b.max.x, 0.01f);
+		ImGui::DragFloat3("bMin", &b.min.x, 0.01f);
 		ImGui::DragFloat3("cameraRotate", &cameraRotate.x, 0.01f);
 		ImGui::DragFloat3("cametaPosition", &cametaPosition.x, 0.01f);
 		ImGui::DragFloat3("WorldRotate", &rotate.x, 0.01f);
@@ -135,35 +141,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 
-		start = Transform(Transform(segment.origine, worldViewProjectionMatrix), viewportMatrix);
-		end = Transform(Transform(Add(segment.origine, segment.diff), worldViewProjectionMatrix), viewportMatrix);
-
-		if (IsCollisionSegmentTriangle(segment, triangle)) {
+		if (IsCollisionAABB(a, b)) {
 			color = RED;
 		}
 		else {
 			color = WHITE;
 		}
 
-		////////
-		/*Vector3 v01 = triangle.vertixces[1] - triangle.vertixces[0];
-		Vector3 v12 = triangle.vertixces[2] - triangle.vertixces[1];
-		Vector3 v20 = triangle.vertixces[0] - triangle.vertixces[2];
-
-		Vector3 normal = Cross(v01, v12);
-		float distance = Dot(triangle.vertixces[0], normal);
-		Plane plane = {
-			normal,
-			distance
-		};
-		float dot = Dot(segment.diff, plane.normal);
-		float t = (plane.distance - Dot(segment.origine, plane.normal)) / dot;
-		Vector3 point = ((segment.diff) * t) + segment.origine;
-
-		Sphere sphere{
-			point,
-			0.1f
-		};*/
 
 		///
 		/// ↑更新処理ここまで
@@ -174,10 +158,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
-		Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), color);
-		DrawTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, WHITE);
-		//DrawSphere(sphere, worldViewProjectionMatrix, viewportMatrix, color);
-		//DrawSphere(sphere2, Multiply(sphere2Matrix, Multiply(viewMatrix, projectionMatrix)), viewportMatrix, WHITE);
+		DrawAABB(a, worldViewProjectionMatrix, viewportMatrix, color);
+		DrawAABB(b, worldViewProjectionMatrix, viewportMatrix, WHITE);
 
 		///
 		/// ↑描画処理ここまで

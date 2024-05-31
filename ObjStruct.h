@@ -29,3 +29,8 @@ struct Plane {
 struct Triangle {
 	Vector3 vertixces[3];
 };
+
+struct AABB {
+	Vector3 min;
+	Vector3 max;
+};
