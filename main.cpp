@@ -1,6 +1,7 @@
 #include <Novice.h>
 #include <imgui.h>
 #include "DrawObj.h"
+#include <algorithm>
 
 bool IsCollision(const Sphere& sphere, const Plane& plane) {
 	float distance = sqrtf((Dot(plane.normal, sphere.center) - plane.distance) * (Dot(plane.normal, sphere.center) - plane.distance));
@@ -73,6 +74,15 @@ bool IsCollisionAABB(const AABB& a, const AABB& b) {
 	return false;
 }
 
+bool IsCollisionAABBSphere(const AABB& a, const Sphere& sphere) {
+	Vector3 closestPoint = { std::clamp(sphere.center.x,a.min.x,a.max.x), std::clamp(sphere.center.y,a.min.y,a.max.y), std::clamp(sphere.center.z,a.min.z,a.max.z) };
+	float distance = Length(closestPoint - sphere.center);
+	if (distance <= sphere.radius) {
+		return true;
+	}
+	return false;
+}
+
 
 const char kWindowTitle[] = "LE2A_18_ヤマグチ_タクト_タイトル";
 
@@ -102,9 +112,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		{0,0.6f,0.3f}
 	};
 
-	AABB b{
-		{0.5f,0,-0.3f},
-		{1.1f,0.6f,0.3f}
+	Vector3 spherePoint{};
+
+	Sphere sphere{
+		spherePoint,
+		0.5f
 	};
 
 	// キー入力結果を受け取る箱
@@ -127,8 +139,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::Begin("Window");
 		ImGui::DragFloat3("aMax", &a.max.x, 0.01f);
 		ImGui::DragFloat3("aMin", &a.min.x, 0.01f);
-		ImGui::DragFloat3("bMax", &b.max.x, 0.01f);
-		ImGui::DragFloat3("bMin", &b.min.x, 0.01f);
+		ImGui::DragFloat3("spherePoint", &spherePoint.x, 0.01f);
 		ImGui::DragFloat3("cameraRotate", &cameraRotate.x, 0.01f);
 		ImGui::DragFloat3("cametaPosition", &cametaPosition.x, 0.01f);
 		ImGui::DragFloat3("WorldRotate", &rotate.x, 0.01f);
@@ -143,13 +154,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		a.max.z = (std::max)(a.min.z, a.max.z);
 
 
-		b.min.x = (std::min)(b.min.x, b.max.x);
-		b.min.y = (std::min)(b.min.y, b.max.y);
-		b.min.z = (std::min)(b.min.z, b.max.z);
-
-		b.max.x = (std::max)(b.min.x, b.max.x);
-		b.max.y = (std::max)(b.min.y, b.max.y);
-		b.max.z = (std::max)(b.min.z, b.max.z);
+		sphere.center = spherePoint;
 
 		worldMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, rotate, translate);
 
@@ -158,7 +163,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 
-		if (IsCollisionAABB(a, b)) {
+		if (IsCollisionAABBSphere(a, sphere)) {
 			color = RED;
 		}
 		else {
@@ -176,7 +181,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 		DrawAABB(a, worldViewProjectionMatrix, viewportMatrix, color);
-		DrawAABB(b, worldViewProjectionMatrix, viewportMatrix, WHITE);
+		DrawSphere(sphere, worldViewProjectionMatrix, viewportMatrix, WHITE);
 
 		///
 		/// ↑描画処理ここまで
