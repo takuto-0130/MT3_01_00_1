@@ -134,6 +134,23 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("WorldRotate", &rotate.x, 0.01f);
 		ImGui::End();
 
+		a.min.x = (std::min)(a.min.x, a.max.x);
+		a.min.y = (std::min)(a.min.y, a.max.y);
+		a.min.z = (std::min)(a.min.z, a.max.z);
+
+		a.max.x = (std::max)(a.min.x, a.max.x);
+		a.max.y = (std::max)(a.min.y, a.max.y);
+		a.max.z = (std::max)(a.min.z, a.max.z);
+
+
+		b.min.x = (std::min)(b.min.x, b.max.x);
+		b.min.y = (std::min)(b.min.y, b.max.y);
+		b.min.z = (std::min)(b.min.z, b.max.z);
+
+		b.max.x = (std::max)(b.min.x, b.max.x);
+		b.max.y = (std::max)(b.min.y, b.max.y);
+		b.max.z = (std::max)(b.min.z, b.max.z);
+
 		worldMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, rotate, translate);
 
 		cameraMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, cametaPosition);

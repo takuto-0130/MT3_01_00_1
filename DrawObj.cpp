@@ -98,7 +98,7 @@ void DrawAABB(const AABB& a, const Matrix4x4& viewProjectionMatrix, const Matrix
 	p[4] = Transform(Transform({ a.min.x, a.min.y, a.max.z }, viewProjectionMatrix), viewportMatrix);
 	p[5] = Transform(Transform({ a.max.x, a.min.y, a.max.z }, viewProjectionMatrix), viewportMatrix);
 	p[6] = Transform(Transform({ a.min.x, a.max.y, a.max.z }, viewProjectionMatrix), viewportMatrix);
-	p[7] = Transform(Transform({ a.max.x, a.max.y, a.max.z }, viewProjectionMatrix), viewportMatrix);
+	p[7] = Transform(Transform(a.max, viewProjectionMatrix), viewportMatrix);
 	Novice::DrawLine(int(p[0].x), int(p[0].y), int(p[1].x), int(p[1].y), color);
 	Novice::DrawLine(int(p[0].x), int(p[0].y), int(p[2].x), int(p[2].y), color);
 	Novice::DrawLine(int(p[1].x), int(p[1].y), int(p[3].x), int(p[3].y), color);
