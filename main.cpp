@@ -160,7 +160,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	X3DAUDIO_DISTANCE_CURVE_POINT volumePoints[10] = {};
 	X3DAUDIO_DISTANCE_CURVE volumeCurve = {};
 
-	/*volumePoints[0].Distance = 0.0f;
+	volumePoints[0].Distance = 0.0f;
 	volumePoints[0].DSPSetting = 1.0f;
 	volumePoints[1].Distance = 0.2f;
 	volumePoints[1].DSPSetting = 1.0f;
@@ -191,7 +191,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	m_emitterCone.OuterAngle = X3DAUDIO_PI;
 	m_emitterCone.InnerVolume = 1.0f;
 	m_emitterCone.OuterVolume = 0.0f;
-	Emitter.pCone = &m_emitterCone;*/
+	Emitter.pCone = &m_emitterCone;
 
 	X3DAUDIO_DSP_SETTINGS DSPSettings = {};
 	FLOAT32* matrix = new FLOAT32[deviceDetails.InputChannels];
@@ -234,6 +234,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		2.0f
 	};
 
+	IXAudio2SourceVoice* pSourceVoice = nullptr;
+	IXAudio2Voice* pMasterVoice = masterVoice;
 	// キー入力結果を受け取る箱
 	char keys[256] = {0};
 	char preKeys[256] = {0};
@@ -299,9 +301,35 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			sphere1Color = WHITE;
 		}
 		if (keys[DIK_SPACE] && !(preKeys[DIK_SPACE])) {
-			SoundPlayWave(xAudio2.Get(), soundData1, DSPSettings, deviceDetails,masterVoice);
-		}
+			HRESULT hr;
+			//
+			hr = xAudio2->CreateSourceVoice(&pSourceVoice, &soundData1.wfex);
+			assert(SUCCEEDED(hr));
+			//
+			XAUDIO2_VOICE_DETAILS voiceDetalis;
+			pSourceVoice->GetVoiceDetails(&voiceDetalis);
+			pSourceVoice->SetOutputMatrix(pMasterVoice, 1, deviceDetails.InputChannels, DSPSettings.pMatrixCoefficients);
+			pSourceVoice->SetFrequencyRatio(DSPSettings.DopplerFactor);
 
+			/*IXAudio2Voice* pSubmixVoice = masterVoice;
+			pSourceVoice->SetOutputMatrix(pSubmixVoice, 1, 1, &DSPSettings.ReverbLevel);*/
+
+			XAUDIO2_FILTER_PARAMETERS FilterParameters = { LowPassFilter, 2.0f * sinf(X3DAUDIO_PI / 6.0f * DSPSettings.LPFDirectCoefficient), 1.0f };
+			pSourceVoice->SetFilterParameters(&FilterParameters);
+
+			XAUDIO2_BUFFER buf{};
+			buf.pAudioData = soundData1.pBuffer;
+			buf.AudioBytes = soundData1.bufferSize;
+			buf.Flags = XAUDIO2_END_OF_STREAM;
+			FLOAT32 pan = -1.0f;
+			pSourceVoice->SetChannelVolumes(1, &pan);
+			hr = pSourceVoice->SubmitSourceBuffer(&buf);
+			hr = pSourceVoice->Start();
+		}
+		if(pSourceVoice != nullptr)
+		{
+			pSourceVoice->SetOutputMatrix(pMasterVoice, 1, deviceDetails.InputChannels, DSPSettings.pMatrixCoefficients);
+		}
 
 		if (keys[DIK_S] && !(preKeys[DIK_S])) {
 			SoundPlayWave(xAudio2.Get(), soundData2, DSPSettings,  deviceDetails, masterVoice);
