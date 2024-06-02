@@ -27,6 +27,7 @@ struct SoundData {
 	WAVEFORMATEX wfex;
 	BYTE* pBuffer;
 	unsigned int bufferSize;
+	int playSoundLength;
 };
 
 SoundData SoundLoadWave(const char* filename) {
@@ -71,6 +72,7 @@ SoundData SoundLoadWave(const char* filename) {
 	soundData.wfex = format.fmt;
 	soundData.pBuffer = reinterpret_cast<BYTE*>(pBuffer);
 	soundData.bufferSize = data.size;
+	soundData.playSoundLength = data.size / format.fmt.nBlockAlign;
 
 	return soundData;
 }
@@ -79,6 +81,7 @@ SoundData SoundLoadWave(const char* filename) {
 void SoundUnload(SoundData* soundData) {
 	delete[] soundData->pBuffer;
 
+	soundData->playSoundLength = 0;
 	soundData->pBuffer = 0;
 	soundData->bufferSize = 0;
 	soundData->wfex = {};
@@ -95,10 +98,10 @@ void SoundPlayWave(IXAudio2* xAudio2, const SoundData& soundData, const X3DAUDIO
 	IXAudio2Voice* pMasterVoice = masterVoice;
 	XAUDIO2_VOICE_DETAILS voiceDetalis;
 	pSourceVoice->GetVoiceDetails(&voiceDetalis);
-	pSourceVoice->SetOutputMatrix(pMasterVoice, 1, deviceDetails.InputChannels, DSPSettings.pMatrixCoefficients);
+	pSourceVoice->SetOutputMatrix(pMasterVoice, 2, deviceDetails.InputChannels, DSPSettings.pMatrixCoefficients);
 	pSourceVoice->SetFrequencyRatio(DSPSettings.DopplerFactor);
 
-	/*IXAudio2Voice* pSubmixVoice = masterVoice;
+	/*IXAudio2SubmixVoice* pSubmixVoice = submixVoice;
 	pSourceVoice->SetOutputMatrix(pSubmixVoice, 1, 1, &DSPSettings.ReverbLevel);*/
 
 	XAUDIO2_FILTER_PARAMETERS FilterParameters = { LowPassFilter, 2.0f * sinf(X3DAUDIO_PI / 6.0f * DSPSettings.LPFDirectCoefficient), 1.0f };
@@ -108,6 +111,8 @@ void SoundPlayWave(IXAudio2* xAudio2, const SoundData& soundData, const X3DAUDIO
 	buf.pAudioData = soundData.pBuffer;
 	buf.AudioBytes = soundData.bufferSize;
 	buf.Flags = XAUDIO2_END_OF_STREAM;
+	buf.PlayBegin = 0;
+	buf.PlayLength = soundData.playSoundLength;
 	FLOAT32 pan = -1.0f;
 	pSourceVoice->SetChannelVolumes(1, &pan);
 	hr = pSourceVoice->SubmitSourceBuffer(&buf);
@@ -141,12 +146,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	X3DAUDIO_LISTENER Listener = {};
 
 	X3DAUDIO_EMITTER Emitter = {};
-	Emitter.ChannelCount = 1; //エミッターの数 (必ず1以上)
+	Emitter.ChannelCount = 2; //エミッターの数 (必ず1以上)
 	Emitter.CurveDistanceScaler = Emitter.DopplerScaler = 1.0f;
 	//エミッターの数が1を超える場合は↓も設定
 	//Emitter.ChannelRadius;
 	//Emitter.pChannelAzimuths;
-	//Emitter.InnerRadius = 0.3f;
+	Emitter.InnerRadius =10.0f;
+	Emitter.InnerRadiusAngle = 360.0f * (float(M_PI) / 180.0f); 
+	Emitter.pChannelAzimuths = new float[2] { -X3DAUDIO_PI / 2, X3DAUDIO_PI / 2 };	// エミッターの方位角
 
 	X3DAUDIO_VECTOR EmitterOrientFront = { 0,0,-1 };
 	X3DAUDIO_VECTOR EmitterOrientTop = { 0,1,0 };
@@ -157,47 +164,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	X3DAUDIO_VECTOR ListenerPosition = Listener.Position;
 	X3DAUDIO_VECTOR ListenerVelocity = Listener.Velocity;
 
-	X3DAUDIO_DISTANCE_CURVE_POINT volumePoints[10] = {};
-	X3DAUDIO_DISTANCE_CURVE volumeCurve = {};
-
-	volumePoints[0].Distance = 0.0f;
-	volumePoints[0].DSPSetting = 1.0f;
-	volumePoints[1].Distance = 0.2f;
-	volumePoints[1].DSPSetting = 1.0f;
-	volumePoints[2].Distance = 0.3f;
-	volumePoints[2].DSPSetting = 0.5f;
-	volumePoints[3].Distance = 0.4f;
-	volumePoints[3].DSPSetting = 0.35f;
-	volumePoints[4].Distance = 0.5f;
-	volumePoints[4].DSPSetting = 0.23f;
-	volumePoints[5].Distance = 0.6f;
-	volumePoints[5].DSPSetting = 0.16f;
-	volumePoints[6].Distance = 0.7f;
-	volumePoints[6].DSPSetting = 0.1f;
-	volumePoints[7].Distance = 0.8f;
-	volumePoints[7].DSPSetting = 0.06f;
-	volumePoints[8].Distance = 0.9f;
-	volumePoints[8].DSPSetting = 0.04f;
-	volumePoints[9].Distance = 1.0f;
-	volumePoints[9].DSPSetting = 0.0f;
-	volumeCurve.PointCount = 10;
-	volumeCurve.pPoints = volumePoints;
-
-	Emitter.pVolumeCurve = &volumeCurve;
-
-	X3DAUDIO_CONE m_emitterCone;
-
-	m_emitterCone.InnerAngle = X3DAUDIO_PI / 2;
-	m_emitterCone.OuterAngle = X3DAUDIO_PI;
-	m_emitterCone.InnerVolume = 1.0f;
-	m_emitterCone.OuterVolume = 0.0f;
-	Emitter.pCone = &m_emitterCone;
+	
 
 	X3DAUDIO_DSP_SETTINGS DSPSettings = {};
-	FLOAT32* matrix = new FLOAT32[deviceDetails.InputChannels];
 	DSPSettings.SrcChannelCount = Emitter.ChannelCount;
 	DSPSettings.DstChannelCount = deviceDetails.InputChannels;
-	DSPSettings.pMatrixCoefficients = matrix;
+	DSPSettings.pMatrixCoefficients = new float[Emitter.ChannelCount * deviceDetails.InputChannels];
+	DSPSettings.pDelayTimes = new float[deviceDetails.InputChannels];
 
 	SoundData soundData1 = SoundLoadWave("NoviceResources/fanfare.wav");
 	SoundData soundData2 = SoundLoadWave("C:/Windows/Media/Alarm01.wav");
@@ -217,7 +190,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Matrix4x4 viewportMatrix = MakeViewportMatrix(0, 0, float(kWindowWidth), float(kWindowHeight), 0.0f, 1.0f);
 
 
-	Vector3 point1{ -1.5f,0.0f,0.0f };
+	Vector3 point1{ 0.0f,0.0f,0.0f };
 	float radius = 0.1f;
 	Sphere sphere1{
 		point1,
@@ -233,8 +206,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		{0.1f,0.1f,0.1f},
 		2.0f
 	};
-
-	IXAudio2SourceVoice* pSourceVoice = nullptr;
+	bool isPlay = false;
+	IXAudio2SourceVoice* pSourceVoice[1] = { nullptr };
 	IXAudio2Voice* pMasterVoice = masterVoice;
 	// キー入力結果を受け取る箱
 	char keys[256] = {0};
@@ -266,10 +239,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			Listener.Velocity = ListenerVelocity;
 
 			X3DAudioCalculate(X3DInstance, &Listener, &Emitter,
-				X3DAUDIO_CALCULATE_MATRIX | X3DAUDIO_CALCULATE_DOPPLER ,
+				X3DAUDIO_CALCULATE_MATRIX | X3DAUDIO_CALCULATE_DOPPLER | X3DAUDIO_CALCULATE_DELAY | X3DAUDIO_CALCULATE_REVERB,
 				&DSPSettings);
 		//}
-
 
 		ImGui::Begin("Window");
 		ImGui::DragFloat3("plane.normal", &plane.normal.x, 0.01f);
@@ -303,32 +275,35 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		if (keys[DIK_SPACE] && !(preKeys[DIK_SPACE])) {
 			HRESULT hr;
 			//
-			hr = xAudio2->CreateSourceVoice(&pSourceVoice, &soundData1.wfex);
+			hr = xAudio2->CreateSourceVoice(&pSourceVoice[0], &soundData1.wfex);
 			assert(SUCCEEDED(hr));
 			//
 			XAUDIO2_VOICE_DETAILS voiceDetalis;
-			pSourceVoice->GetVoiceDetails(&voiceDetalis);
-			pSourceVoice->SetOutputMatrix(pMasterVoice, 1, deviceDetails.InputChannels, DSPSettings.pMatrixCoefficients);
-			pSourceVoice->SetFrequencyRatio(DSPSettings.DopplerFactor);
+			pSourceVoice[0]->GetVoiceDetails(&voiceDetalis);
+			pSourceVoice[0]->SetOutputMatrix(pMasterVoice, 2, deviceDetails.InputChannels, DSPSettings.pMatrixCoefficients);
+			pSourceVoice[0]->SetFrequencyRatio(DSPSettings.DopplerFactor);
 
 			/*IXAudio2Voice* pSubmixVoice = masterVoice;
 			pSourceVoice->SetOutputMatrix(pSubmixVoice, 1, 1, &DSPSettings.ReverbLevel);*/
 
 			XAUDIO2_FILTER_PARAMETERS FilterParameters = { LowPassFilter, 2.0f * sinf(X3DAUDIO_PI / 6.0f * DSPSettings.LPFDirectCoefficient), 1.0f };
-			pSourceVoice->SetFilterParameters(&FilterParameters);
+			pSourceVoice[0]->SetFilterParameters(&FilterParameters);
 
 			XAUDIO2_BUFFER buf{};
 			buf.pAudioData = soundData1.pBuffer;
 			buf.AudioBytes = soundData1.bufferSize;
 			buf.Flags = XAUDIO2_END_OF_STREAM;
+			buf.PlayBegin = 0;
+			buf.PlayLength = soundData1.playSoundLength;
 			FLOAT32 pan = -1.0f;
-			pSourceVoice->SetChannelVolumes(1, &pan);
-			hr = pSourceVoice->SubmitSourceBuffer(&buf);
-			hr = pSourceVoice->Start();
+			pSourceVoice[0]->SetChannelVolumes(1, &pan);
+			hr = pSourceVoice[0]->SubmitSourceBuffer(&buf);
+			hr = pSourceVoice[0]->Start();
+			isPlay = true;
 		}
-		if(pSourceVoice != nullptr)
+		if(isPlay == true)
 		{
-			pSourceVoice->SetOutputMatrix(pMasterVoice, 1, deviceDetails.InputChannels, DSPSettings.pMatrixCoefficients);
+			pSourceVoice[0]->SetOutputMatrix(pMasterVoice, 1, deviceDetails.InputChannels, DSPSettings.pMatrixCoefficients);
 		}
 
 		if (keys[DIK_S] && !(preKeys[DIK_S])) {
@@ -359,6 +334,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			break;
 		}
 	}
+	pSourceVoice[0]->DestroyVoice();
 	xAudio2.Reset();
 	SoundUnload(&soundData1);
 	SoundUnload(&soundData2);
