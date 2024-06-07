@@ -172,6 +172,30 @@ bool IsCollisionAABBSegment(const AABB& a, const Segment& segment) {
 	return false;
 }
 
+//bool IsCollisionOBBSphere(const OBB& obb, const Sphere& sphere) {
+//	Matrix4x4 obbMat = {};
+//	obbMat.m[0][0] = obb.oriientations[0].x;
+//	obbMat.m[0][1] = obb.oriientations[0].y;
+//	obbMat.m[0][2] = obb.oriientations[0].z;
+//
+//	obbMat.m[1][0] = obb.oriientations[1].x;
+//	obbMat.m[1][1] = obb.oriientations[1].y;
+//	obbMat.m[1][2] = obb.oriientations[1].z;
+//
+//	obbMat.m[2][0] = obb.oriientations[2].x;
+//	obbMat.m[2][1] = obb.oriientations[2].y;
+//	obbMat.m[2][2] = obb.oriientations[2].z;
+//
+//	obbMat.m[3][0] = obb.center.x;
+//	obbMat.m[3][1] = obb.center.y;
+//	obbMat.m[3][2] = obb.center.z;
+//
+//	obbMat.m[3][3] = 1.0f;
+//
+//	obbMatInverse = Inverse()
+//
+//}
+
 
 const char kWindowTitle[] = "LE2A_18_ヤマグチ_タクト_タイトル";
 

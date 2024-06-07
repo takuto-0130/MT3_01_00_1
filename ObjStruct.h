@@ -34,3 +34,9 @@ struct AABB {
 	Vector3 min;
 	Vector3 max;
 };
+
+struct OBB {
+	Vector3 center;
+	Vector3 oriientations[3];
+	Vector3 size;
+};
