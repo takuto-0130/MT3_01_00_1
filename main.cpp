@@ -228,14 +228,23 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	uint32_t color = WHITE;
 
-	AABB a{
-		{-0.5f,-0.5f,-0.5f},
-		{0.5f,0.5f,0.5f}
+	Vector3 OBBrotate{ 0,0,0 };
+	Matrix4x4 OBBrotateMatrix = 
+		Multiply(MakeRotateXMatrix(OBBrotate.x), Multiply(MakeRotateYMatrix(OBBrotate.y), MakeRotateZMatrix(OBBrotate.z)));
+
+	OBB obb{
+		.center {-1.0f,0.0f,0.0f},
+		.oriientations{
+			{1,0,0},
+			{0,1,0},
+			{0,0,1}
+			},
+		.size{0.5f,0.5f,0.5f}
 	};
 
-	Segment segment{
-		.origine{-0.7f, 0.3f, 0.5f},
-		.diff{2.0f,-0.5f,0.0f}
+	Sphere sphere{
+		.center{0,0,0},
+		.radius{0.5f}
 	};
 
 	// キー入力結果を受け取る箱
@@ -256,20 +265,34 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 
 		ImGui::Begin("Window");
-		ImGui::DragFloat3("aMax", &a.max.x, 0.01f);
-		ImGui::DragFloat3("aMin", &a.min.x, 0.01f);
-		ImGui::DragFloat3("segment.origine", &segment.origine.x, 0.01f);
-		ImGui::DragFloat3("segment.diff", &segment.diff.x, 0.01f);
+		ImGui::DragFloat3("obb.center", &obb.center.x, 0.01f);
+		ImGui::DragFloat3("obb.size", &obb.size.x, 0.01f);
+		ImGui::DragFloat3("OBBrotate", &OBBrotate.x, 0.01f);
+		ImGui::DragFloat3("sphere.center", &sphere.center.x, 0.01f);
 		ImGui::DragFloat2("WorldRotate", &rotate.x, 0.01f);
 		ImGui::End();
 
-		a.min.x = (std::min)(a.min.x, a.max.x);
+		/*a.min.x = (std::min)(a.min.x, a.max.x);
 		a.min.y = (std::min)(a.min.y, a.max.y);
 		a.min.z = (std::min)(a.min.z, a.max.z);
 
 		a.max.x = (std::max)(a.min.x, a.max.x);
 		a.max.y = (std::max)(a.min.y, a.max.y);
-		a.max.z = (std::max)(a.min.z, a.max.z);
+		a.max.z = (std::max)(a.min.z, a.max.z);*/
+
+		OBBrotateMatrix =
+			Multiply(MakeRotateXMatrix(OBBrotate.x), Multiply(MakeRotateYMatrix(OBBrotate.y), MakeRotateZMatrix(OBBrotate.z)));
+		obb.oriientations[0].x = OBBrotateMatrix.m[0][0];
+		obb.oriientations[0].y = OBBrotateMatrix.m[0][1];
+		obb.oriientations[0].z = OBBrotateMatrix.m[0][2];
+
+		obb.oriientations[1].x = OBBrotateMatrix.m[1][0];
+		obb.oriientations[1].y = OBBrotateMatrix.m[1][1];
+		obb.oriientations[1].z = OBBrotateMatrix.m[1][2];
+
+		obb.oriientations[2].x = OBBrotateMatrix.m[2][0];
+		obb.oriientations[2].y = OBBrotateMatrix.m[2][1];
+		obb.oriientations[2].z = OBBrotateMatrix.m[2][2];
 
 		cameraMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, cametaPosition);
 		cameraMatrix = Multiply(cameraMatrix, MakeRotateXMatrix(rotate.x));
@@ -278,7 +301,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 
-		if (IsCollisionAABBSegment(a, segment)) {
+		if (IsCollisionOBBSphere(obb, sphere)) {
 			color = RED;
 		}
 		else {
@@ -295,8 +318,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
-		DrawSegment(segment, worldViewProjectionMatrix, viewportMatrix, WHITE);
-		DrawAABB(a, worldViewProjectionMatrix, viewportMatrix, color);
+		DrawSphere(sphere, worldViewProjectionMatrix, viewportMatrix, WHITE);
+		DrawOBB(obb, worldViewProjectionMatrix, viewportMatrix, color);
 
 
 		///
