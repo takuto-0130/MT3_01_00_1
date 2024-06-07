@@ -98,7 +98,7 @@ void SoundPlayWave(IXAudio2* xAudio2, const SoundData& soundData, const X3DAUDIO
 	IXAudio2Voice* pMasterVoice = masterVoice;
 	XAUDIO2_VOICE_DETAILS voiceDetalis;
 	pSourceVoice->GetVoiceDetails(&voiceDetalis);
-	pSourceVoice->SetOutputMatrix(pMasterVoice, 2, deviceDetails.InputChannels, DSPSettings.pMatrixCoefficients);
+	pSourceVoice->SetOutputMatrix(pMasterVoice, 1, deviceDetails.InputChannels, DSPSettings.pMatrixCoefficients);
 	pSourceVoice->SetFrequencyRatio(DSPSettings.DopplerFactor);
 
 	/*IXAudio2SubmixVoice* pSubmixVoice = submixVoice;
@@ -146,14 +146,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	X3DAUDIO_LISTENER Listener = {};
 
 	X3DAUDIO_EMITTER Emitter = {};
-	Emitter.ChannelCount = 2; //エミッターの数 (必ず1以上)
+	Emitter.ChannelCount = 1; //エミッターの数 (必ず1以上)
 	Emitter.CurveDistanceScaler = Emitter.DopplerScaler = 1.0f;
 	//エミッターの数が1を超える場合は↓も設定
 	//Emitter.ChannelRadius;
 	//Emitter.pChannelAzimuths;
 	Emitter.InnerRadius =10.0f;
 	Emitter.InnerRadiusAngle = 360.0f * (float(M_PI) / 180.0f); 
-	Emitter.pChannelAzimuths = new float[2] { -X3DAUDIO_PI / 2, X3DAUDIO_PI / 2 };	// エミッターの方位角
+	//Emitter.pChannelAzimuths = new float[2] { -X3DAUDIO_PI / 2, X3DAUDIO_PI / 2 };	// エミッターの方位角
 
 	X3DAUDIO_VECTOR EmitterOrientFront = { 0,0,-1 };
 	X3DAUDIO_VECTOR EmitterOrientTop = { 0,1,0 };
@@ -161,7 +161,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	X3DAUDIO_VECTOR EmitterVelocity = { 0,0,1 };
 	X3DAUDIO_VECTOR ListenerOrientFront = { 0,0,1 };
 	X3DAUDIO_VECTOR ListenerOrientTop = { 0,1,0 };
-	X3DAUDIO_VECTOR ListenerPosition = Listener.Position;
+	X3DAUDIO_VECTOR ListenerPosition = { 0.0f,0.0f,0.0f };
 	X3DAUDIO_VECTOR ListenerVelocity = Listener.Velocity;
 
 	
@@ -176,6 +176,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	SoundData soundData2 = SoundLoadWave("C:/Windows/Media/Alarm01.wav");
 
 	int frameCount = 0;
+	float masterVolume = 1.0f;
+	float source1Volume = 0.7f;
+	float source2Volume = 0.7f;
 	
 	Vector3 cameraRotate{ 0.26f,0,0 };
 	Vector3 translate{};
@@ -207,7 +210,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		2.0f
 	};
 	bool isPlay = false;
-	IXAudio2SourceVoice* pSourceVoice[1] = { nullptr };
+	bool isPlay2 = false;
+	IXAudio2SourceVoice* pSourceVoice[2] = { nullptr };
 	IXAudio2Voice* pMasterVoice = masterVoice;
 	// キー入力結果を受け取る箱
 	char keys[256] = {0};
@@ -239,17 +243,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			Listener.Velocity = ListenerVelocity;
 
 			X3DAudioCalculate(X3DInstance, &Listener, &Emitter,
-				X3DAUDIO_CALCULATE_MATRIX | X3DAUDIO_CALCULATE_DOPPLER | X3DAUDIO_CALCULATE_DELAY | X3DAUDIO_CALCULATE_REVERB,
+				X3DAUDIO_CALCULATE_MATRIX | X3DAUDIO_CALCULATE_DOPPLER /*| X3DAUDIO_CALCULATE_DELAY | X3DAUDIO_CALCULATE_REVERB*/,
 				&DSPSettings);
 		//}
 
 		ImGui::Begin("Window");
-		ImGui::DragFloat3("plane.normal", &plane.normal.x, 0.01f);
-		ImGui::DragFloat3("SphereCenter", &point1.x, 0.01f);
-		ImGui::DragFloat("SphereRadius", &radius, 0.01f,0.0f,100.0f);
-		ImGui::DragFloat3("cametaPosition", &cametaPosition.x, 0.01f);
-		ImGui::DragFloat3("WorldRotate", &rotate.x, 0.01f);
-		ImGui::InputFloat("distance", &DSPSettings.EmitterToListenerDistance);
+		ImGui::SliderFloat("MasterVolume", &masterVolume, 0.0f, 1.0f);
+		ImGui::SliderFloat("source1Volume", &source1Volume, 0.0f, 1.0f);
+		ImGui::SliderFloat("source2Volume", &source2Volume, 0.0f, 1.0f);
 		ImGui::End();
 		plane.normal = Normalize(plane.normal);
 
@@ -280,11 +281,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			//
 			XAUDIO2_VOICE_DETAILS voiceDetalis;
 			pSourceVoice[0]->GetVoiceDetails(&voiceDetalis);
-			pSourceVoice[0]->SetOutputMatrix(pMasterVoice, 2, deviceDetails.InputChannels, DSPSettings.pMatrixCoefficients);
+			pSourceVoice[0]->SetOutputMatrix(pMasterVoice, 1, deviceDetails.InputChannels, DSPSettings.pMatrixCoefficients);
 			pSourceVoice[0]->SetFrequencyRatio(DSPSettings.DopplerFactor);
-
-			/*IXAudio2Voice* pSubmixVoice = masterVoice;
-			pSourceVoice->SetOutputMatrix(pSubmixVoice, 1, 1, &DSPSettings.ReverbLevel);*/
 
 			XAUDIO2_FILTER_PARAMETERS FilterParameters = { LowPassFilter, 2.0f * sinf(X3DAUDIO_PI / 6.0f * DSPSettings.LPFDirectCoefficient), 1.0f };
 			pSourceVoice[0]->SetFilterParameters(&FilterParameters);
@@ -304,12 +302,41 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		if(isPlay == true)
 		{
 			pSourceVoice[0]->SetOutputMatrix(pMasterVoice, 1, deviceDetails.InputChannels, DSPSettings.pMatrixCoefficients);
+			pSourceVoice[0]->SetVolume(source1Volume);
 		}
 
 		if (keys[DIK_S] && !(preKeys[DIK_S])) {
-			SoundPlayWave(xAudio2.Get(), soundData2, DSPSettings,  deviceDetails, masterVoice);
-		}
+			HRESULT hr;
+			//
+			hr = xAudio2->CreateSourceVoice(&pSourceVoice[1], &soundData2.wfex);
+			assert(SUCCEEDED(hr));
+			//
+			XAUDIO2_VOICE_DETAILS voiceDetalis;
+			pSourceVoice[1]->GetVoiceDetails(&voiceDetalis);
+			pSourceVoice[1]->SetOutputMatrix(pMasterVoice, 1, deviceDetails.InputChannels, DSPSettings.pMatrixCoefficients);
+			pSourceVoice[1]->SetFrequencyRatio(DSPSettings.DopplerFactor);
 
+			XAUDIO2_FILTER_PARAMETERS FilterParameters = { LowPassFilter, 2.0f * sinf(X3DAUDIO_PI / 6.0f * DSPSettings.LPFDirectCoefficient), 1.0f };
+			pSourceVoice[1]->SetFilterParameters(&FilterParameters);
+
+			XAUDIO2_BUFFER buf{};
+			buf.pAudioData = soundData2.pBuffer;
+			buf.AudioBytes = soundData2.bufferSize;
+			buf.Flags = XAUDIO2_END_OF_STREAM;
+			buf.PlayBegin = 0;
+			buf.PlayLength = soundData2.playSoundLength;
+			FLOAT32 pan = -1.0f;
+			pSourceVoice[1]->SetChannelVolumes(1, &pan);
+			hr = pSourceVoice[1]->SubmitSourceBuffer(&buf);
+			hr = pSourceVoice[1]->Start();
+			isPlay2 = true;
+		}
+		if (isPlay2 == true)
+		{
+			pSourceVoice[1]->SetOutputMatrix(pMasterVoice, 1, deviceDetails.InputChannels, DSPSettings.pMatrixCoefficients);
+			pSourceVoice[1]->SetVolume(source2Volume);
+		}
+		pMasterVoice->SetVolume(masterVolume);
 		///
 		/// ↑更新処理ここまで
 		///
@@ -318,8 +345,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 		
-		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
-		DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, sphere1Color);
+		/*DrawGrid(worldViewProjectionMatrix, viewportMatrix);
+		DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, sphere1Color);*/
 		//DrawSphere(sphere2, Multiply(sphere2Matrix, Multiply(viewMatrix, projectionMatrix)), viewportMatrix, WHITE);
 
 		///
@@ -334,7 +361,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			break;
 		}
 	}
-	pSourceVoice[0]->DestroyVoice();
+	if (isPlay == true)
+	{
+		pSourceVoice[0]->DestroyVoice();
+	}
+	if (isPlay2 == true)
+	{
+		pSourceVoice[1]->DestroyVoice();
+	}
 	xAudio2.Reset();
 	SoundUnload(&soundData1);
 	SoundUnload(&soundData2);
