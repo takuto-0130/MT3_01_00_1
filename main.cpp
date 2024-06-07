@@ -83,41 +83,35 @@ bool IsCollisionAABBSphere(const AABB& a, const Sphere& sphere) {
 	return false;
 }
 
-bool IsCollisionAABBLine(const AABB& a, const Segment& segment) {
+bool IsCollisionAABBLine(const AABB& a, const Line& line) {
+	if (line.diff.x == 0.0f && line.diff.y == 0.0f && line.diff.z == 0.0f) {
+		return false;
+	}
 	//X軸
-	Vector3 normalNearX = Normalize({ a.min.x, 0, 0 });
-	float distanceNearX = a.min.x;
-	float dotNearX = Dot(segment.diff, normalNearX);
-	float tNearX = (distanceNearX - Dot(segment.origine, normalNearX)) / dotNearX;
+	float tMinX = (a.min.x - line.origine.x) / line.diff.x;
 
-	Vector3 normalFarX = Normalize({ a.max.x, 0, 0 });
-	float distanceFarX = a.max.x;
-	float dotFarX = Dot(segment.diff, normalFarX);
-	float tFarX = (distanceFarX - Dot(segment.origine, normalFarX)) / dotFarX;
+	float tMaxX = (a.max.x - line.origine.x) / line.diff.x;
+
+	float tNearX = min(tMinX, tMaxX);
+	float tFarX = max(tMinX, tMaxX);
 
 
 	//Y軸
-	Vector3 normalNearY = Normalize({ a.min.y, 0, 0 });
-	float distanceNearY = a.min.y;
-	float dotNearY = Dot(segment.diff, normalNearY);
-	float tNearY = (distanceNearY - Dot(segment.origine, normalNearY)) / dotNearY;
+	float tMinY = (a.min.y - line.origine.y) / line.diff.y;
 
-	Vector3 normalFarY = Normalize({ a.max.y, 0, 0 });
-	float distanceFarY = a.max.y;
-	float dotFarY = Dot(segment.diff, normalFarY);
-	float tFarY = (distanceFarY - Dot(segment.origine, normalFarY)) / dotFarY;
+	float tMaxY = (a.max.y - line.origine.y) / line.diff.y;
+
+	float tNearY = min(tMinY, tMaxY);
+	float tFarY = max(tMinY, tMaxY);
 
 
 	//Z軸
-	Vector3 normalNearZ = Normalize({ a.min.z, 0, 0 });
-	float distanceNearZ = a.min.z;
-	float dotNearZ = Dot(segment.diff, normalNearZ);
-	float tNearZ = (distanceNearZ - Dot(segment.origine, normalNearZ)) / dotNearZ;
+	float tMinZ = (a.min.z - line.origine.z) / line.diff.z;
 
-	Vector3 normalFarZ = Normalize({ a.max.z, 0, 0 });
-	float distanceFarZ = a.max.z;
-	float dotFarZ = Dot(segment.diff, normalFarZ);
-	float tFarZ = (distanceFarZ - Dot(segment.origine, normalFarZ)) / dotFarZ;
+	float tMaxZ = (a.max.z - line.origine.z) / line.diff.z;
+
+	float tNearZ = min(tMinZ, tMaxZ);
+	float tFarZ = max(tMinZ, tMaxZ);
 
 
 	float tMin = max(max(tNearX, tNearY), tNearZ);
@@ -127,6 +121,54 @@ bool IsCollisionAABBLine(const AABB& a, const Segment& segment) {
 	if (tMin <= tMax) {
 		return true;
 	}
+	return false;
+}
+
+
+bool IsCollisionAABBSegment(const AABB& a, const Segment& segment) {
+	if (segment.diff.x == 0.0f && segment.diff.y == 0.0f && segment.diff.z == 0.0f) {
+		return false;
+	}
+	//X軸
+	float tMinX = (a.min.x - segment.origine.x) / segment.diff.x;
+
+	float tMaxX = (a.max.x - segment.origine.x) / segment.diff.x;
+
+	float tNearX = min(tMinX, tMaxX);
+	float tFarX = max(tMinX, tMaxX);
+
+
+	//Y軸
+	float tMinY = (a.min.y - segment.origine.y) / segment.diff.y;
+
+	float tMaxY = (a.max.y - segment.origine.y) / segment.diff.y;
+
+	float tNearY = min(tMinY, tMaxY);
+	float tFarY = max(tMinY, tMaxY);
+
+
+	//Z軸
+	float tMinZ = (a.min.z - segment.origine.z) / segment.diff.z;
+
+	float tMaxZ = (a.max.z - segment.origine.z) / segment.diff.z;
+
+	float tNearZ = min(tMinZ, tMaxZ);
+	float tFarZ = max(tMinZ, tMaxZ);
+
+
+	float tMin = max(max(tNearX, tNearY), tNearZ);
+
+	float tMax = min(min(tFarX, tFarY), tFarZ);
+
+	if (tMin > tMax) {
+		return false;
+	}
+	if ((tMin >= 0.0f && tMin <= 1.0f) || (tMax >= 0.0f && tMax <= 1.0f) ||
+		(tMin <= 0.0f && tMax >= 1.0f)) {
+		return true;
+	}
+
+
 	return false;
 }
 
@@ -186,7 +228,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("aMin", &a.min.x, 0.01f);
 		ImGui::DragFloat3("segment.origine", &segment.origine.x, 0.01f);
 		ImGui::DragFloat3("segment.diff", &segment.diff.x, 0.01f);
-		ImGui::DragFloat3("WorldRotate", &rotate.x, 0.01f);
+		ImGui::DragFloat2("WorldRotate", &rotate.x, 0.01f);
 		ImGui::End();
 
 		a.min.x = (std::min)(a.min.x, a.max.x);
@@ -197,14 +239,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		a.max.y = (std::max)(a.min.y, a.max.y);
 		a.max.z = (std::max)(a.min.z, a.max.z);
 
-		worldMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, rotate, translate);
-
 		cameraMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, cametaPosition);
+		cameraMatrix = Multiply(cameraMatrix, MakeRotateXMatrix(rotate.x));
+		cameraMatrix = Multiply(cameraMatrix, MakeRotateYMatrix(rotate.y));
 		viewMatrix = Inverse(cameraMatrix);
 
 		worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 
-		if (IsCollisionAABBLine(a, segment)) {
+		if (IsCollisionAABBSegment(a, segment)) {
 			color = RED;
 		}
 		else {
@@ -221,6 +263,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
+		DrawSegment(segment, worldViewProjectionMatrix, viewportMatrix, WHITE);
 		DrawAABB(a, worldViewProjectionMatrix, viewportMatrix, color);
 
 
