@@ -83,6 +83,53 @@ bool IsCollisionAABBSphere(const AABB& a, const Sphere& sphere) {
 	return false;
 }
 
+bool IsCollisionAABBLine(const AABB& a, const Segment& segment) {
+	//X軸
+	Vector3 normalNearX = Normalize({ a.min.x, 0, 0 });
+	float distanceNearX = a.min.x;
+	float dotNearX = Dot(segment.diff, normalNearX);
+	float tNearX = (distanceNearX - Dot(segment.origine, normalNearX)) / dotNearX;
+
+	Vector3 normalFarX = Normalize({ a.max.x, 0, 0 });
+	float distanceFarX = a.max.x;
+	float dotFarX = Dot(segment.diff, normalFarX);
+	float tFarX = (distanceFarX - Dot(segment.origine, normalFarX)) / dotFarX;
+
+
+	//Y軸
+	Vector3 normalNearY = Normalize({ a.min.y, 0, 0 });
+	float distanceNearY = a.min.y;
+	float dotNearY = Dot(segment.diff, normalNearY);
+	float tNearY = (distanceNearY - Dot(segment.origine, normalNearY)) / dotNearY;
+
+	Vector3 normalFarY = Normalize({ a.max.y, 0, 0 });
+	float distanceFarY = a.max.y;
+	float dotFarY = Dot(segment.diff, normalFarY);
+	float tFarY = (distanceFarY - Dot(segment.origine, normalFarY)) / dotFarY;
+
+
+	//Z軸
+	Vector3 normalNearZ = Normalize({ a.min.z, 0, 0 });
+	float distanceNearZ = a.min.z;
+	float dotNearZ = Dot(segment.diff, normalNearZ);
+	float tNearZ = (distanceNearZ - Dot(segment.origine, normalNearZ)) / dotNearZ;
+
+	Vector3 normalFarZ = Normalize({ a.max.z, 0, 0 });
+	float distanceFarZ = a.max.z;
+	float dotFarZ = Dot(segment.diff, normalFarZ);
+	float tFarZ = (distanceFarZ - Dot(segment.origine, normalFarZ)) / dotFarZ;
+
+
+	float tMin = max(max(tNearX, tNearY), tNearZ);
+
+	float tMax = min(min(tFarX, tFarY), tFarZ);
+
+	if (tMin <= tMax) {
+		return true;
+	}
+	return false;
+}
+
 
 const char kWindowTitle[] = "LE2A_18_ヤマグチ_タクト_タイトル";
 
@@ -108,15 +155,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	uint32_t color = WHITE;
 
 	AABB a{
-		{-0.6f,0,-0.3f},
-		{0,0.6f,0.3f}
+		{-0.5f,-0.5f,-0.5f},
+		{0.5f,0.5f,0.5f}
 	};
 
-	Vector3 spherePoint{};
-
-	Sphere sphere{
-		spherePoint,
-		0.5f
+	Segment segment{
+		.origine{-0.7f, 0.3f, 0.5f},
+		.diff{2.0f,-0.5f,0.0f}
 	};
 
 	// キー入力結果を受け取る箱
@@ -139,9 +184,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::Begin("Window");
 		ImGui::DragFloat3("aMax", &a.max.x, 0.01f);
 		ImGui::DragFloat3("aMin", &a.min.x, 0.01f);
-		ImGui::DragFloat3("spherePoint", &spherePoint.x, 0.01f);
-		ImGui::DragFloat3("cameraRotate", &cameraRotate.x, 0.01f);
-		ImGui::DragFloat3("cametaPosition", &cametaPosition.x, 0.01f);
+		ImGui::DragFloat3("segment.origine", &segment.origine.x, 0.01f);
+		ImGui::DragFloat3("segment.diff", &segment.diff.x, 0.01f);
 		ImGui::DragFloat3("WorldRotate", &rotate.x, 0.01f);
 		ImGui::End();
 
@@ -153,9 +197,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		a.max.y = (std::max)(a.min.y, a.max.y);
 		a.max.z = (std::max)(a.min.z, a.max.z);
 
-
-		sphere.center = spherePoint;
-
 		worldMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, rotate, translate);
 
 		cameraMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, cametaPosition);
@@ -163,7 +204,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 
-		if (IsCollisionAABBSphere(a, sphere)) {
+		if (IsCollisionAABBLine(a, segment)) {
 			color = RED;
 		}
 		else {
@@ -181,7 +222,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 		DrawAABB(a, worldViewProjectionMatrix, viewportMatrix, color);
-		DrawSphere(sphere, worldViewProjectionMatrix, viewportMatrix, WHITE);
+
 
 		///
 		/// ↑描画処理ここまで
