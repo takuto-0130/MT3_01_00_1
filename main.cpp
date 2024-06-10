@@ -197,11 +197,36 @@ bool IsCollisionOBBSphere(const OBB& obb, const Sphere& sphere) {
 
 	AABB aabbOBBLocal{ .min = -obb.size, .max = obb.size };
 	Sphere sphereOBBLocal{ centerInOBBLocalSpace, sphere.radius };
+	return IsCollisionAABBSphere(aabbOBBLocal, sphereOBBLocal);
+}
 
-	if (IsCollisionAABBSphere(aabbOBBLocal, sphereOBBLocal)) {
-		return true;
-	}
-	return false;
+bool IsCollisionOBBSegment(const OBB& obb, const Segment& segment) {
+	Matrix4x4 obbMat = {};
+	obbMat.m[0][0] = obb.oriientations[0].x;
+	obbMat.m[0][1] = obb.oriientations[0].y;
+	obbMat.m[0][2] = obb.oriientations[0].z;
+
+	obbMat.m[1][0] = obb.oriientations[1].x;
+	obbMat.m[1][1] = obb.oriientations[1].y;
+	obbMat.m[1][2] = obb.oriientations[1].z;
+
+	obbMat.m[2][0] = obb.oriientations[2].x;
+	obbMat.m[2][1] = obb.oriientations[2].y;
+	obbMat.m[2][2] = obb.oriientations[2].z;
+
+	obbMat.m[3][0] = obb.center.x;
+	obbMat.m[3][1] = obb.center.y;
+	obbMat.m[3][2] = obb.center.z;
+
+	obbMat.m[3][3] = 1.0f;
+
+	Matrix4x4 obbMatInverse = Inverse(obbMat);
+	Vector3 localOrigin = Transform(segment.origine, obbMatInverse);
+	Vector3 localEnd = Transform(segment.origine + segment.diff, obbMatInverse);
+
+	AABB aabbOBBLocal{ .min = -obb.size, .max = obb.size };
+	Segment localSegment{ .origine{localOrigin}, .diff{localEnd - localOrigin} };
+	return IsCollisionAABBSegment(aabbOBBLocal, localSegment);
 }
 
 
@@ -242,9 +267,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		.size{0.5f,0.5f,0.5f}
 	};
 
-	Sphere sphere{
-		.center{0,0,0},
-		.radius{0.5f}
+	Segment segment{
+		.origine{-0.8f, -0.3f,0.0f},
+		.diff{0.5f,0.5f,0.5f}
 	};
 
 	// キー入力結果を受け取る箱
@@ -268,7 +293,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("obb.center", &obb.center.x, 0.01f);
 		ImGui::DragFloat3("obb.size", &obb.size.x, 0.01f);
 		ImGui::DragFloat3("OBBrotate", &OBBrotate.x, 0.01f);
-		ImGui::DragFloat3("sphere.center", &sphere.center.x, 0.01f);
+		ImGui::DragFloat3("segment.origine", &segment.origine.x, 0.01f);
+		ImGui::DragFloat3("segment.diff", &segment.diff.x, 0.01f);
 		ImGui::DragFloat2("WorldRotate", &rotate.x, 0.01f);
 		ImGui::End();
 
@@ -297,7 +323,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 
-		if (IsCollisionOBBSphere(obb, sphere)) {
+		if (IsCollisionOBBSegment(obb, segment)) {
 			color = RED;
 		}
 		else {
@@ -314,7 +340,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
-		DrawSphere(sphere, worldViewProjectionMatrix, viewportMatrix, WHITE);
+		DrawSegment(segment, worldViewProjectionMatrix, viewportMatrix, WHITE);
 		DrawOBB(obb, worldViewProjectionMatrix, viewportMatrix, color);
 
 
