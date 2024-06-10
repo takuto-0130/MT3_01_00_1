@@ -272,13 +272,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat2("WorldRotate", &rotate.x, 0.01f);
 		ImGui::End();
 
-		/*a.min.x = (std::min)(a.min.x, a.max.x);
-		a.min.y = (std::min)(a.min.y, a.max.y);
-		a.min.z = (std::min)(a.min.z, a.max.z);
-
-		a.max.x = (std::max)(a.min.x, a.max.x);
-		a.max.y = (std::max)(a.min.y, a.max.y);
-		a.max.z = (std::max)(a.min.z, a.max.z);*/
+		obb.size.x = (std::max)(obb.size.x, 0.02f);
+		obb.size.y = (std::max)(obb.size.y, 0.02f);
+		obb.size.z = (std::max)(obb.size.z, 0.02f);
 
 		OBBrotateMatrix =
 			Multiply(MakeRotateXMatrix(OBBrotate.x), Multiply(MakeRotateYMatrix(OBBrotate.y), MakeRotateZMatrix(OBBrotate.z)));

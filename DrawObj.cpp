@@ -122,8 +122,12 @@ void DrawAABB(const AABB& a, const Matrix4x4& viewProjectionMatrix, const Matrix
 }
 
 void DrawOBB(const OBB& obb, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
-	Vector3 max = (Normalize(obb.oriientations[0]) * obb.size.x) + (Normalize(obb.oriientations[1]) * obb.size.y) + (Normalize(obb.oriientations[2]) * obb.size.z);
-	/*AABB a = {
+
+	Vector3 sizeX = (obb.oriientations[0]) * obb.size.x;
+	Vector3 sizeY = (obb.oriientations[1]) * obb.size.y;
+	Vector3 sizeZ = (obb.oriientations[2]) * obb.size.z;
+	Vector3 max = (sizeX + sizeY + sizeZ);
+	AABB a = {
 		.min = -max + obb.center,
 		.max = max + obb.center
 	};
@@ -131,12 +135,12 @@ void DrawOBB(const OBB& obb, const Matrix4x4& viewProjectionMatrix, const Matrix
 
 	Vector3 p[8];
 	p[0] = Transform(Transform(a.min, viewProjectionMatrix), viewportMatrix);
-	p[1] = Transform(Transform({ a.max.x, a.min.y, a.min.z }, viewProjectionMatrix), viewportMatrix);
-	p[2] = Transform(Transform({ a.min.x, a.max.y, a.min.z }, viewProjectionMatrix), viewportMatrix);
-	p[3] = Transform(Transform({ a.max.x, a.max.y, a.min.z }, viewProjectionMatrix), viewportMatrix);
-	p[4] = Transform(Transform({ a.min.x, a.min.y, a.max.z }, viewProjectionMatrix), viewportMatrix);
-	p[5] = Transform(Transform({ a.max.x, a.min.y, a.max.z }, viewProjectionMatrix), viewportMatrix);
-	p[6] = Transform(Transform({ a.min.x, a.max.y, a.max.z }, viewProjectionMatrix), viewportMatrix);
+	p[1] = Transform(Transform(a.min + (sizeX * 2), viewProjectionMatrix), viewportMatrix);
+	p[2] = Transform(Transform(a.min + (sizeY * 2), viewProjectionMatrix), viewportMatrix);
+	p[3] = Transform(Transform(a.min + (sizeX * 2) + (sizeY * 2), viewProjectionMatrix), viewportMatrix);
+	p[4] = Transform(Transform(a.min + (sizeZ * 2), viewProjectionMatrix), viewportMatrix);
+	p[5] = Transform(Transform(a.min + (sizeX * 2) + (sizeZ * 2), viewProjectionMatrix), viewportMatrix);
+	p[6] = Transform(Transform(a.min + (sizeY * 2) + (sizeZ * 2), viewProjectionMatrix), viewportMatrix);
 	p[7] = Transform(Transform(a.max, viewProjectionMatrix), viewportMatrix);
 	Novice::DrawLine(int(p[0].x), int(p[0].y), int(p[1].x), int(p[1].y), color);
 	Novice::DrawLine(int(p[0].x), int(p[0].y), int(p[2].x), int(p[2].y), color);
@@ -151,23 +155,5 @@ void DrawOBB(const OBB& obb, const Matrix4x4& viewProjectionMatrix, const Matrix
 	Novice::DrawLine(int(p[0].x), int(p[0].y), int(p[0 + 4].x), int(p[0 + 4].y), color);
 	Novice::DrawLine(int(p[1].x), int(p[1].y), int(p[1 + 4].x), int(p[1 + 4].y), color);
 	Novice::DrawLine(int(p[2].x), int(p[2].y), int(p[2 + 4].x), int(p[2 + 4].y), color);
-	Novice::DrawLine(int(p[3].x), int(p[3].y), int(p[3 + 4].x), int(p[3 + 4].y), color);*/
-
-	/*Plane plane1{ .normal{obb.oriientations[0]}, .distance{max.x} };
-	DrawPlane(plane1, viewProjectionMatrix, viewportMatrix, color);
-
-	Plane plane2{ .normal{obb.oriientations[1]}, .distance{max.y} };
-	DrawPlane(plane2, viewProjectionMatrix, viewportMatrix, color);
-
-	Plane plane3{ .normal{obb.oriientations[2]}, .distance{max.z} };
-	DrawPlane(plane3, viewProjectionMatrix, viewportMatrix, color);
-
-	Plane plane4{ .normal{-obb.oriientations[0]}, .distance{max.x} };
-	DrawPlane(plane4, viewProjectionMatrix, viewportMatrix, color);
-
-	Plane plane5{ .normal{-obb.oriientations[1]}, .distance{max.y} };
-	DrawPlane(plane5, viewProjectionMatrix, viewportMatrix, color);
-
-	Plane plane6{ .normal{-obb.oriientations[2]}, .distance{max.z} };
-	DrawPlane(plane6, viewProjectionMatrix, viewportMatrix, color);*/
+	Novice::DrawLine(int(p[3].x), int(p[3].y), int(p[3 + 4].x), int(p[3 + 4].y), color);
 }
