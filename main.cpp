@@ -349,34 +349,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	uint32_t color = WHITE;
 
-	Vector3 OBBrotate{ 0,0,0 };
-	Matrix4x4 OBBrotateMatrix = 
-		Multiply(MakeRotateXMatrix(OBBrotate.x), Multiply(MakeRotateYMatrix(OBBrotate.y), MakeRotateZMatrix(OBBrotate.z)));
-
-	OBB obb{
-		.center {0.0f,0.0f,0.0f},
-		.oriientations{
-			{1,0,0},
-			{0,1,0},
-			{0,0,1}
-			},
-		.size{0.83f,0.26f,0.24f}
+	Vector3 controlPoint[3] = {
+		{-0.8f, 0.58f, 1.f},
+		{1.76f,1.f,-0.3f},
+		{0.94f,-0.7f,2.3f}
 	};
 
-	Vector3 OBBrotate2{ 0,0,0 };
-	Matrix4x4 OBBrotateMatrix2 =
-		Multiply(MakeRotateXMatrix(OBBrotate2.x), Multiply(MakeRotateYMatrix(OBBrotate2.y), MakeRotateZMatrix(OBBrotate2.z)));
-
-	OBB obb2{
-		.center {0.9f,0.66f,0.78f},
-		.oriientations{
-			{1,0,0},
-			{0,1,0},
-			{0,0,1}
-			},
-		.size{0.5f,0.37f,0.5f}
+	Sphere sphere[3] = {
+		{(controlPoint[0]), (0.01f)},
+		{(controlPoint[1]), (0.01f)},
+		{(controlPoint[2]), (0.01f)},
 	};
-
 
 	// キー入力結果を受け取る箱
 	char keys[256] = { 0 };
@@ -396,25 +379,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 
 		ImGui::Begin("Window");
-		ImGui::DragFloat3("obb1.center", &obb.center.x, 0.01f);
-		ImGui::DragFloat3("obb1.size", &obb.size.x, 0.01f);
-		ImGui::DragFloat3("obb1rotate", &OBBrotate.x, 0.01f);
-		ImGui::DragFloat3("obb2.center", &obb2.center.x, 0.01f);
-		ImGui::DragFloat3("obb2.size", &obb2.size.x, 0.01f);
-		ImGui::DragFloat3("obb2rotate", &OBBrotate2.x, 0.01f);
+		ImGui::DragFloat3("center0", &controlPoint[0].x, 0.01f);
+		ImGui::DragFloat3("center1", &controlPoint[1].x, 0.01f);
+		ImGui::DragFloat3("center2", &controlPoint[2].x, 0.01f);
 		ImGui::DragFloat2("cameraWorldRotate", &rotate.x, 0.01f);
 		ImGui::End();
-
-		obb.size.x = (std::max)(obb.size.x, 0.02f);
-		obb.size.y = (std::max)(obb.size.y, 0.02f);
-		obb.size.z = (std::max)(obb.size.z, 0.02f);
-
-		obb2.size.x = (std::max)(obb2.size.x, 0.02f);
-		obb2.size.y = (std::max)(obb2.size.y, 0.02f);
-		obb2.size.z = (std::max)(obb2.size.z, 0.02f);
-
-		OBBRotation(OBBrotate, obb);
-		OBBRotation(OBBrotate2, obb2);
 
 		cameraMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, cametaPosition);
 		cameraMatrix = Multiply(cameraMatrix, MakeRotateXMatrix(rotate.x));
@@ -423,13 +392,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 
-		if (IsCollisionOBBOBB(obb, obb2)) {
-			color = RED;
-		}
-		else {
-			color = WHITE;
-		}
-
+		sphere[0] = {(controlPoint[0]), (0.01f)};
+		sphere[1] = {(controlPoint[1]), (0.01f)};
+		sphere[2] = {(controlPoint[2]), (0.01f)};
 
 		///
 		/// ↑更新処理ここまで
@@ -440,10 +405,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
-		DrawOBB(obb, worldViewProjectionMatrix, viewportMatrix, color);
-		DrawOBB(obb2, worldViewProjectionMatrix, viewportMatrix, WHITE);
-
-
+		DrawBezier(controlPoint[0], controlPoint[1], controlPoint[2], worldViewProjectionMatrix, viewportMatrix, color);
+		for (size_t i = 0; i < 3; i++) {
+			DrawSphere(sphere[i], worldViewProjectionMatrix, viewportMatrix, BLACK);
+		}
 		///
 		/// ↑描画処理ここまで
 		///

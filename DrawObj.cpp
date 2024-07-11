@@ -147,13 +147,23 @@ void DrawOBB(const OBB& obb, const Matrix4x4& viewProjectionMatrix, const Matrix
 	Novice::DrawLine(int(p[1].x), int(p[1].y), int(p[3].x), int(p[3].y), color);
 	Novice::DrawLine(int(p[2].x), int(p[2].y), int(p[3].x), int(p[3].y), color);
 
-	Novice::DrawLine(int(p[0 + 4].x), int(p[0 + 4].y), int(p[1 + 4].x), int(p[1 + 4].y), color);
-	Novice::DrawLine(int(p[0 + 4].x), int(p[0 + 4].y), int(p[2 + 4].x), int(p[2 + 4].y), color);
-	Novice::DrawLine(int(p[1 + 4].x), int(p[1 + 4].y), int(p[3 + 4].x), int(p[3 + 4].y), color);
-	Novice::DrawLine(int(p[2 + 4].x), int(p[2 + 4].y), int(p[3 + 4].x), int(p[3 + 4].y), color);
+	Novice::DrawLine(int(p[4].x), int(p[4].y), int(p[5].x), int(p[5].y), color);
+	Novice::DrawLine(int(p[4].x), int(p[4].y), int(p[6].x), int(p[6].y), color);
+	Novice::DrawLine(int(p[5].x), int(p[5].y), int(p[7].x), int(p[7].y), color);
+	Novice::DrawLine(int(p[6].x), int(p[6].y), int(p[7].x), int(p[7].y), color);
 
-	Novice::DrawLine(int(p[0].x), int(p[0].y), int(p[0 + 4].x), int(p[0 + 4].y), color);
-	Novice::DrawLine(int(p[1].x), int(p[1].y), int(p[1 + 4].x), int(p[1 + 4].y), color);
-	Novice::DrawLine(int(p[2].x), int(p[2].y), int(p[2 + 4].x), int(p[2 + 4].y), color);
-	Novice::DrawLine(int(p[3].x), int(p[3].y), int(p[3 + 4].x), int(p[3 + 4].y), color);
+	Novice::DrawLine(int(p[0].x), int(p[0].y), int(p[4].x), int(p[4].y), color);
+	Novice::DrawLine(int(p[1].x), int(p[1].y), int(p[5].x), int(p[5].y), color);
+	Novice::DrawLine(int(p[2].x), int(p[2].y), int(p[6].x), int(p[6].y), color);
+	Novice::DrawLine(int(p[3].x), int(p[3].y), int(p[7].x), int(p[7].y), color);
+}
+
+void DrawBezier(const Vector3& p0, const Vector3& p1, const Vector3& p2, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
+	Vector3 p[65];
+	for (size_t i = 0; i < 65; i++) {
+		p[i] = Transform(Transform(Bezier(p0, p1, p2, float(i / 64.0f)), viewProjectionMatrix), viewportMatrix);
+	}
+	for (size_t i = 0; i < 64; i++) {
+		Novice::DrawLine(int(p[i].x), int(p[i].y), int(p[i+1].x), int(p[i+1].y), color);
+	}
 }

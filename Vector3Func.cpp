@@ -79,3 +79,18 @@ Vector3 operator*(const Vector3& v, const float& s) {
 Vector3 operator*(const float& s, const Vector3& v) {
     return Multiply(v, s);
 }
+
+float Lerp(const float& a, const float& b, float t) {
+    return a + t * (b - a);
+}
+
+Vector3 Lerp(const Vector3& v1, const Vector3& v2, float t) {
+    return v1 + t * (v2 - v1);
+}
+
+Vector3 Bezier(const Vector3& p0, const Vector3& p1, const Vector3& p2, float t) {
+    Vector3 p0p1 = Lerp(p0, p1, t);
+    Vector3 p1p2 = Lerp(p1, p2, t);
+    Vector3 p = Lerp(p0p1, p1p2, t);
+    return p;
+}
