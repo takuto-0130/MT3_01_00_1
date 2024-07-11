@@ -1,4 +1,4 @@
-#include "Vector3Func.h"
+ï»¿#include "Vector3Func.h"
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <algorithm>
@@ -98,9 +98,9 @@ Vector3 Bezier(const Vector3& p0, const Vector3& p1, const Vector3& p2, float t)
 }
 
 Vector3 CatmullRomInterpolation(const Vector3& p0, const Vector3& p1, const Vector3& p2, const Vector3& p3, float t) {
-    float s = 0.5f;		// œZ‚ªd‚¢‚Ì‚Å1/2‚Ì‘ã—p
-    float t2 = t * t;	// t‚Ì2æ
-    float t3 = t2 * t;	// t‚Ì3æ
+    float s = 0.5f;		// é™¤ç®—ãŒé‡ã„ã®ã§1/2ã®ä»£ç”¨
+    float t2 = t * t;	// tã®2ä¹—
+    float t3 = t2 * t;	// tã®3ä¹—
 
     Vector3 e3 = -p0 + 3 * p1 - 3 * p2 + p3;
     Vector3 e2 = 2 * p0 - 5 * p1 + 4 * p2 - p3;

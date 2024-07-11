@@ -2,6 +2,7 @@
 #include <imgui.h>
 #include "DrawObj.h"
 #include <algorithm>
+#include <vector>
 
 bool IsCollision(const Sphere& sphere, const Plane& plane) {
 	float distance = sqrtf((Dot(plane.normal, sphere.center) - plane.distance) * (Dot(plane.normal, sphere.center) - plane.distance));
@@ -334,17 +335,37 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// ライブラリの初期化
 	Novice::Initialize(kWindowTitle, 1280, 720);
 
-	Vector3 a{ 0.2f,1.0f,0.0f };
-	Vector3 b{ 2.4f,3.1f,1.2f };
-	Vector3 c = a + b;
-	Vector3 d = a - b;
-	Vector3 e = a * 2.4f;
-	Vector3 rotate{ 0.4f,1.43f,-0.8f };
-	Matrix4x4 rXM = MakeRotateXMatrix(rotate.x);
-	Matrix4x4 rYM = MakeRotateYMatrix(rotate.y);
-	Matrix4x4 rZM = MakeRotateZMatrix(rotate.z);
-	Matrix4x4 rM = rXM * rYM * rZM;
-	
+
+	Vector3 cameraRotate{ 0.26f,0,0 };
+	Vector3 translate{};
+	Vector3 cametaPosition{ 0,1.9f,-6.49f };
+	Vector3 rotate{};
+
+	Matrix4x4 worldMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, rotate, translate);
+	Matrix4x4 cameraMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, cametaPosition);
+	Matrix4x4 viewMatrix = Inverse(cameraMatrix);
+	Matrix4x4 projectionMatrix = MakePrespectiveFovMatrix(0.45f, float(kWindowWidth) / float(kWindowHeight), 0.1f, 100.0f);
+	Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
+	Matrix4x4 viewportMatrix = MakeViewportMatrix(0, 0, float(kWindowWidth), float(kWindowHeight), 0.0f, 1.0f);
+
+	uint32_t color = BLUE;
+
+	const int segment = 100;
+
+	std::vector<Vector3> controlPoints = {
+		{-0.8f, 0.58f, 1.f},
+		{1.76f, 1.f, -0.3f},
+		{0.94f, -0.7f, 2.3f},
+		{-0.53f, -0.26f, -0.15f}
+	};
+
+	Sphere sphere[4] = {
+		{(controlPoints[0]), (0.01f)},
+		{(controlPoints[1]), (0.01f)},
+		{(controlPoints[2]), (0.01f)},
+		{(controlPoints[3]), (0.01f)},
+	};
+
 	// キー入力結果を受け取る箱
 	char keys[256] = { 0 };
 	char preKeys[256] = { 0 };
@@ -363,16 +384,24 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 
 		ImGui::Begin("Window");
-		ImGui::Text("c:%f, %f, %f", c.x, c.y, c.z);
-		ImGui::Text("d:%f, %f, %f", d.x, d.y, d.z);
-		ImGui::Text("e:%f, %f, %f", e.x, e.y, e.z);
-		ImGui::Text("matrix:\n%f, %f, %f, %f\n%f, %f, %f, %f\n%f, %f, %f, %f\n%f, %f, %f, %f",
-			rM.m[0][0], rM.m[0][1], rM.m[0][2], rM.m[0][3],
-			rM.m[1][0], rM.m[1][1], rM.m[1][2], rM.m[1][3],
-			rM.m[2][0], rM.m[2][1], rM.m[2][2], rM.m[2][3],
-			rM.m[3][0], rM.m[3][1], rM.m[3][2], rM.m[3][3]);
+		ImGui::DragFloat3("center0", &controlPoints[0].x, 0.01f);
+		ImGui::DragFloat3("center1", &controlPoints[1].x, 0.01f);
+		ImGui::DragFloat3("center2", &controlPoints[2].x, 0.01f);
+		ImGui::DragFloat3("center3", &controlPoints[3].x, 0.01f);
+		ImGui::DragFloat2("cameraWorldRotate", &rotate.x, 0.01f);
 		ImGui::End();
 
+		cameraMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, cametaPosition);
+		cameraMatrix = Multiply(cameraMatrix, MakeRotateXMatrix(rotate.x));
+		cameraMatrix = Multiply(cameraMatrix, MakeRotateYMatrix(rotate.y));
+		viewMatrix = Inverse(cameraMatrix);
+
+		worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
+
+		sphere[0] = { (controlPoints[0]), (0.01f) };
+		sphere[1] = { (controlPoints[1]), (0.01f) };
+		sphere[2] = { (controlPoints[2]), (0.01f) };
+		sphere[3] = { (controlPoints[3]), (0.01f) };
 
 		///
 		/// ↑更新処理ここまで
@@ -382,6 +411,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 
+		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
+		DrawCatmullRom(controlPoints, segment, worldViewProjectionMatrix, viewportMatrix, color);
+		for (size_t i = 0; i < 4; i++) {
+			DrawSphere(sphere[i], worldViewProjectionMatrix, viewportMatrix, BLACK);
+		}
 		///
 		/// ↑描画処理ここまで
 		///

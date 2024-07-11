@@ -167,3 +167,17 @@ void DrawBezier(const Vector3& p0, const Vector3& p1, const Vector3& p2, const M
 		Novice::DrawLine(int(p[i].x), int(p[i].y), int(p[i+1].x), int(p[i+1].y), color);
 	}
 }
+
+void DrawCatmullRom(const std::vector<Vector3>& points, const int segmentCount, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
+	std::vector<Vector3> segmentPoints;
+	std::vector<Vector3> screenPoints;
+	for (size_t i = 0; i < segmentCount + 1; i++) {
+		float t = 1.0f / segmentCount * i;
+		Vector3 pos = CatmullRomPosition(points, t);
+		segmentPoints.push_back(pos);
+		screenPoints.push_back(Transform(Transform(segmentPoints[i], viewProjectionMatrix), viewportMatrix));
+	}
+	for (size_t i = 0; i < segmentCount; i++) {
+		Novice::DrawLine(int(screenPoints[i].x), int(screenPoints[i].y), int(screenPoints[i + 1].x), int(screenPoints[i + 1].y), color);
+	}
+}
