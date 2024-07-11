@@ -272,3 +272,7 @@ Vector3 Transform(const Vector3& vector, const Matrix4x4& matrix) {
 	}
 	return result;
 }
+
+Matrix4x4 operator*(const Matrix4x4& m1, const Matrix4x4& m2) {
+	return Multiply(m1, m2);
+}
