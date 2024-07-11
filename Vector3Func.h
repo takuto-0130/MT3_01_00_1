@@ -1,6 +1,8 @@
 #pragma once
 #include "Vector3.h"
 #include "ObjStruct.h"
+#include <algorithm>
+#include <vector>
 
 Vector3 Cross(const Vector3& v1, const Vector3& v2);
 
@@ -39,3 +41,5 @@ float Lerp(const float& a, const float& b, float t);
 Vector3 Lerp(const Vector3& v1, const Vector3& v2, float t);
 
 Vector3 Bezier(const Vector3& p0, const Vector3& p1, const Vector3& p2, float t);
+
+Vector3 CatmullRomPosition(const std::vector<Vector3>& points, float t);
