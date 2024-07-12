@@ -350,23 +350,23 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	//uint32_t color = BLUE;
 
-	
+
 	Vector3 p{ 0.f,0.f,0.f };
 
 	float deltaTime = 1.0f / 60.0f;
 
 	bool isStart = false;
 
-	Pendulum pendulum{};
-	pendulum = {
+	ConicalPendulum conicalPendulum{};
+	conicalPendulum = {
 		.anchor = {0.f,1.f,0.f},
 		.length = 0.8f,
-		.angle = 0.7f,
+		.halfApexAngle = 0.7f,
+		.angle = 0.f,
 		.angularVelocity = 0.f,
-		.angularAcceleration = 0.f
 	};
 	Sphere sphere{
-		pendulum.anchor,
+		conicalPendulum.anchor,
 		0.05f
 	};
 
@@ -396,13 +396,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::End();
 
 		if (isStart) {
-			pendulum.angularAcceleration = -(9.8f / pendulum.length) * std::sin(pendulum.angle);
-			pendulum.angularVelocity += pendulum.angularAcceleration * deltaTime;
-			pendulum.angle += pendulum.angularVelocity * deltaTime;
+			conicalPendulum.angularVelocity = std::sqrt(9.8f / (conicalPendulum.length + std::cos(conicalPendulum.halfApexAngle)));
+			conicalPendulum.angle += conicalPendulum.angularVelocity * deltaTime;
 		}
-		p.x = pendulum.anchor.x + std::sin(pendulum.angle) * pendulum.length;
-		p.y = pendulum.anchor.y - std::cos(pendulum.angle) * pendulum.length;
-		p.z = pendulum.anchor.z;
+		float radius = std::sin(conicalPendulum.halfApexAngle) * conicalPendulum.length;
+		float height = std::cos(conicalPendulum.halfApexAngle) * conicalPendulum.length;
+		p.x = conicalPendulum.anchor.x + std::cos(conicalPendulum.angle) * radius;
+		p.y = conicalPendulum.anchor.y - height;
+		p.z = conicalPendulum.anchor.z - std::sin(conicalPendulum.angle) * radius;
 		sphere.center = p;
 		cameraMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, cametaPosition);
 		cameraMatrix = Multiply(cameraMatrix, MakeRotateXMatrix(rotate.x));
@@ -421,7 +422,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
-		DrawSegment(Segment{ .origine = pendulum.anchor, .diff = p - pendulum.anchor }, worldViewProjectionMatrix, viewportMatrix, WHITE);
+		DrawSegment(Segment{ .origine = conicalPendulum.anchor, .diff = p - conicalPendulum.anchor }, worldViewProjectionMatrix, viewportMatrix, WHITE);
 		DrawSphere(sphere, worldViewProjectionMatrix, viewportMatrix, WHITE);
 
 		///
