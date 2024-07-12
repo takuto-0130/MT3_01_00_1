@@ -56,3 +56,11 @@ struct Ball {
 	float radius;
 	unsigned int color;
 };
+
+struct Pendulum {
+	Vector3 anchor;
+	float length;
+	float angle;
+	float angularVelocity;
+	float angularAcceleration;
+};

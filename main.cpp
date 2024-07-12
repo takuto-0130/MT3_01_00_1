@@ -364,6 +364,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	bool isStart = false;
 
+	Pendulum pendulum{
+		.anchor = {0.f,1.f,0.f},
+		.length = 0.8f,
+		.angle = 0.7f,
+		.angularVelocity = 0.f,
+		.angularAcceleration = 0.f
+	};
+
 	// キー入力結果を受け取る箱
 	char keys[256] = { 0 };
 	char preKeys[256] = { 0 };
