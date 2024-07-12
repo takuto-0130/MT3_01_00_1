@@ -350,26 +350,24 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	//uint32_t color = BLUE;
 
-	float anglarVelocity = 3.14f;
-	float angle = 0.0f;
-	float r = 0.8f;
-	Vector3 center{ 0.f,0.f,0.f };
-	Vector3 p{ r,0.f,0.f };
-	Sphere sphere{
-		center,
-		0.05f
-	};
+	
+	Vector3 p{ 0.f,0.f,0.f };
 
 	float deltaTime = 1.0f / 60.0f;
 
 	bool isStart = false;
 
-	Pendulum pendulum{
+	Pendulum pendulum{};
+	pendulum = {
 		.anchor = {0.f,1.f,0.f},
 		.length = 0.8f,
 		.angle = 0.7f,
 		.angularVelocity = 0.f,
 		.angularAcceleration = 0.f
+	};
+	Sphere sphere{
+		pendulum.anchor,
+		0.05f
 	};
 
 	// キー入力結果を受け取る箱
@@ -398,11 +396,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::End();
 
 		if (isStart) {
-			angle += anglarVelocity * deltaTime;
+			pendulum.angularAcceleration = -(9.8f / pendulum.length) * std::sin(pendulum.angle);
+			pendulum.angularVelocity += pendulum.angularAcceleration * deltaTime;
+			pendulum.angle += pendulum.angularVelocity * deltaTime;
 		}
-		p.x = center.x + std::cos(angle) * r;
-		p.y = center.y + std::sin(angle) * r;
-		p.z = center.z;
+		p.x = pendulum.anchor.x + std::sin(pendulum.angle) * pendulum.length;
+		p.y = pendulum.anchor.y - std::cos(pendulum.angle) * pendulum.length;
+		p.z = pendulum.anchor.z;
 		sphere.center = p;
 		cameraMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, cametaPosition);
 		cameraMatrix = Multiply(cameraMatrix, MakeRotateXMatrix(rotate.x));
@@ -421,6 +421,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
+		DrawSegment(Segment{ .origine = pendulum.anchor, .diff = p - pendulum.anchor }, worldViewProjectionMatrix, viewportMatrix, WHITE);
 		DrawSphere(sphere, worldViewProjectionMatrix, viewportMatrix, WHITE);
 
 		///
