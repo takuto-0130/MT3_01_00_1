@@ -350,21 +350,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	//uint32_t color = BLUE;
 
-	Spring spring{
-		.anchor = {0.f,1.f,0.f},
-		.naturalLength = 0.7f,
-		.stiffness = 100.f,
-		.dampingCoefficient = 2.f
+	float anglarVelocity = 3.14f;
+	float angle = 0.0f;
+	float r = 0.8f;
+	Vector3 center{ 0.f,0.f,0.f };
+	Vector3 p{ r,0.f,0.f };
+	Sphere sphere{
+		center,
+		0.05f
 	};
-
-	Ball ball{};
-	ball = {
-		.position = {0.8f,0.2f,0.0f},
-		.mass = 2.f,
-		.radius = 0.05f,
-		.color = BLUE
-	};
-	const Vector3 kGravity{ 0.f,-9.8f,0.f };
 
 	float deltaTime = 1.0f / 60.0f;
 
@@ -389,34 +383,26 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		ImGui::Begin("Window");
 		ImGui::DragFloat2("cameraWorldRotate", &rotate.x, 0.01f);
+		ImGui::DragFloat3("cametaPosition", &cametaPosition.x, 0.01f);
 		if (ImGui::Button("start")) {
 			isStart = true;
 		}
 		ImGui::End();
 
-		if (isStart){
-			Vector3 diff = ball.position - spring.anchor;
-			float length = Length(diff);
-			if (length != 0.0f) {
-				Vector3 direction = Normalize(diff);
-				Vector3 restPosition = spring.anchor + direction * spring.naturalLength;
-				Vector3 displacement = length * (ball.position - restPosition);
-				Vector3 restoringForce = -spring.stiffness * displacement;
-				Vector3 dampingForce = -spring.dampingCoefficient * ball.velocity + kGravity;
-				Vector3 force = restoringForce + dampingForce;
-				ball.acceleration = force / ball.mass;
-			}
-
-			ball.velocity += ball.acceleration * deltaTime;
-			ball.position += ball.velocity * deltaTime;
-
-			cameraMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, cametaPosition);
-			cameraMatrix = Multiply(cameraMatrix, MakeRotateXMatrix(rotate.x));
-			cameraMatrix = Multiply(cameraMatrix, MakeRotateYMatrix(rotate.y));
-			viewMatrix = Inverse(cameraMatrix);
-
-			worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
+		if (isStart) {
+			angle += anglarVelocity * deltaTime;
 		}
+		p.x = center.x + std::cos(angle) * r;
+		p.y = center.y + std::sin(angle) * r;
+		p.z = center.z;
+		sphere.center = p;
+		cameraMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, cametaPosition);
+		cameraMatrix = Multiply(cameraMatrix, MakeRotateXMatrix(rotate.x));
+		cameraMatrix = Multiply(cameraMatrix, MakeRotateYMatrix(rotate.y));
+		viewMatrix = Inverse(cameraMatrix);
+
+		worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
+
 
 		///
 		/// ↑更新処理ここまで
@@ -427,8 +413,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
-		DrawSegment(Segment{ .origine = spring.anchor, .diff = ball.position - spring.anchor }, worldViewProjectionMatrix, viewportMatrix, WHITE);
-		DrawSphere(Sphere{ .center = ball.position, .radius = ball.radius }, worldViewProjectionMatrix, viewportMatrix, ball.color);
+		DrawSphere(sphere, worldViewProjectionMatrix, viewportMatrix, WHITE);
+
 		///
 		/// ↑描画処理ここまで
 		///
