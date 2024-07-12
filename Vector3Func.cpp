@@ -82,6 +82,11 @@ Vector3 operator*(const float& s, const Vector3& v) {
     return Multiply(v, s);
 }
 
+Vector3 operator/(const Vector3& v, const float& s)
+{
+    return Vector3(v.x/s,v.y/s,v.z/s);
+}
+
 float Lerp(const float& a, const float& b, float t) {
     return a + t * (b - a);
 }
