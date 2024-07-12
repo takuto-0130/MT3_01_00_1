@@ -351,19 +351,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//uint32_t color = BLUE;
 
 	Spring spring{
-		.anchor = {0.f,0.f,0.f},
-		.naturalLength = 1.f,
+		.anchor = {0.f,1.f,0.f},
+		.naturalLength = 0.7f,
 		.stiffness = 100.f,
 		.dampingCoefficient = 2.f
 	};
 
 	Ball ball{};
 	ball = {
-		.position = {1.2f,0.f,0.f},
+		.position = {0.8f,0.2f,0.0f},
 		.mass = 2.f,
 		.radius = 0.05f,
 		.color = BLUE
 	};
+	const Vector3 kGravity{ 0.f,-9.8f,0.f };
 
 	float deltaTime = 1.0f / 60.0f;
 
@@ -401,7 +402,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 				Vector3 restPosition = spring.anchor + direction * spring.naturalLength;
 				Vector3 displacement = length * (ball.position - restPosition);
 				Vector3 restoringForce = -spring.stiffness * displacement;
-				Vector3 dampingForce = -spring.dampingCoefficient * ball.velocity;
+				Vector3 dampingForce = -spring.dampingCoefficient * ball.velocity + kGravity;
 				Vector3 force = restoringForce + dampingForce;
 				ball.acceleration = force / ball.mass;
 			}
