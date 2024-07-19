@@ -348,8 +348,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 	Matrix4x4 viewportMatrix = MakeViewportMatrix(0, 0, float(kWindowWidth), float(kWindowHeight), 0.0f, 1.0f);
 
-	//uint32_t color = BLUE;
-
 
 	Vector3 p{ 0.f,0.f,0.f };
 
@@ -357,18 +355,22 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	bool isStart = false;
 
-	ConicalPendulum conicalPendulum{};
-	conicalPendulum = {
-		.anchor = {0.f,1.f,0.f},
-		.length = 0.8f,
-		.halfApexAngle = 0.7f,
-		.angle = 0.f,
-		.angularVelocity = 0.f,
+	Plane plane{
+		.normal = Normalize({-0.2f, 0.9f, -0.3f}),
+		.distance = 0.0f
 	};
-	Sphere sphere{
-		conicalPendulum.anchor,
-		0.05f
+
+	Ball ball{};
+	ball = {
+		.position = {0.0f, 1.2f, 0.3f},
+		.acceleration = {0.0f, -9.8f, 0.0f},
+		.mass = 2.0f,
+		.radius = 0.05f,
+		.color = WHITE
 	};
+	
+	// 反発係数
+	float e = 0.7f;
 
 	// キー入力結果を受け取る箱
 	char keys[256] = { 0 };
@@ -390,21 +392,24 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::Begin("Window");
 		ImGui::DragFloat2("cameraWorldRotate", &rotate.x, 0.01f);
 		ImGui::DragFloat3("cametaPosition", &cametaPosition.x, 0.01f);
-		if (ImGui::Button("start")) {
-			isStart = true;
-		}
+		ImGui::Checkbox("start", &isStart);
 		ImGui::End();
 
 		if (isStart) {
-			conicalPendulum.angularVelocity = std::sqrt(9.8f / (conicalPendulum.length + std::cos(conicalPendulum.halfApexAngle)));
-			conicalPendulum.angle += conicalPendulum.angularVelocity * deltaTime;
+			ball.velocity += ball.acceleration * deltaTime;
+			ball.position += ball.velocity * deltaTime;
 		}
-		float radius = std::sin(conicalPendulum.halfApexAngle) * conicalPendulum.length;
-		float height = std::cos(conicalPendulum.halfApexAngle) * conicalPendulum.length;
-		p.x = conicalPendulum.anchor.x + std::cos(conicalPendulum.angle) * radius;
-		p.y = conicalPendulum.anchor.y - height;
-		p.z = conicalPendulum.anchor.z - std::sin(conicalPendulum.angle) * radius;
-		sphere.center = p;
+		else {
+			ball.position = { 0.0f, 1.2f, 0.4f };
+			ball.velocity = { 0.0f, 0.0f, 0.0f };
+		}
+		if (IsCollision(Sphere{ ball.position, ball.radius }, plane)) {
+			Vector3 reflected = Reflect(ball.velocity, plane.normal);
+			Vector3 projectToNormal = Project(reflected, plane.normal);
+			Vector3 movingDirection = reflected - projectToNormal;
+			ball.velocity = projectToNormal * e + movingDirection;
+		}
+		
 		cameraMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, cametaPosition);
 		cameraMatrix = Multiply(cameraMatrix, MakeRotateXMatrix(rotate.x));
 		cameraMatrix = Multiply(cameraMatrix, MakeRotateYMatrix(rotate.y));
@@ -422,8 +427,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
-		DrawSegment(Segment{ .origine = conicalPendulum.anchor, .diff = p - conicalPendulum.anchor }, worldViewProjectionMatrix, viewportMatrix, WHITE);
-		DrawSphere(sphere, worldViewProjectionMatrix, viewportMatrix, WHITE);
+		DrawPlane(plane, worldViewProjectionMatrix, viewportMatrix, WHITE);
+		DrawSphere(Sphere{ ball.position, ball.radius }, worldViewProjectionMatrix, viewportMatrix, ball.color);
+		
 
 		///
 		/// ↑描画処理ここまで

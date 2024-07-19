@@ -67,7 +67,7 @@ Vector3 operator-(const Vector3& v1, const Vector3& v2) {
 }
 
 Vector3 operator-(const Vector3& a) {
-    return { -a.x,-a.y,-a.z };
+    return { a.x * -1.0f,a.y * -1.0f,a.z * -1.0f };
 }
 
 Vector3 operator+(const Vector3& v1, const Vector3& v2) {
@@ -140,4 +140,8 @@ Vector3 CatmullRomPosition(const std::vector<Vector3>& points, float t) {
     const Vector3& p2 = points[index2];
     const Vector3& p3 = points[index3];
     return CatmullRomInterpolation(p0, p1, p2, p3, t_2);
+}
+
+Vector3 Reflect(const Vector3& input, const Vector3& normal) {
+    return input - (2.0f * Dot(input, normal) * normal);
 }
