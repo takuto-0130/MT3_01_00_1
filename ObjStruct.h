@@ -72,3 +72,8 @@ struct ConicalPendulum {
 	float angle;
 	float angularVelocity;
 };
+
+struct Capsule {
+	Segment segment;
+	float raadius;
+};

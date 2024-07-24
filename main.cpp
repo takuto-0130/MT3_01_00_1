@@ -12,6 +12,14 @@ bool IsCollision(const Sphere& sphere, const Plane& plane) {
 	return false;
 }
 
+//void CapsuleOffset(const Capsule& capsule, const Plane& plane, const Vector3& center) {
+//	Sphere nextSphere{ capsule.segment.origine + capsule.segment.diff, capsule.raadius };
+//	float distance = sqrtf((Dot(plane.normal, nextSphere.center) - plane.distance) * (Dot(plane.normal, nextSphere.center) - plane.distance));
+//	if (distance < nextSphere.radius) {
+//
+//	}
+//}
+
 bool IsCollisionLinePlane(const Segment& segment, const Plane& plane) {
 	float dot = Dot(segment.diff, plane.normal);
 	if (dot == 0) {
@@ -356,21 +364,29 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	bool isStart = false;
 
 	Plane plane{
-		.normal = Normalize({-0.2f, 0.9f, -0.3f}),
+		.normal = Normalize({-0.2f, 1.2f, -0.3f}),
 		.distance = 0.0f
 	};
 
 	Ball ball{};
 	ball = {
-		.position = {0.0f, 1.2f, 0.3f},
+		.position = {0.8f, 1.2f, 0.3f},
 		.acceleration = {0.0f, -9.8f, 0.0f},
 		.mass = 2.0f,
 		.radius = 0.05f,
 		.color = WHITE
 	};
+
+	Capsule capsule{
+		.segment = {.origine = {ball.position}, .diff = {ball.velocity}},
+		.raadius = ball.radius
+	};
 	
 	// 反発係数
 	float e = 0.7f;
+
+	Vector3 v1{ 0,1,0 };
+	Vector3 v2{ 0,-1,0 };
 
 	// キー入力結果を受け取る箱
 	char keys[256] = { 0 };
@@ -390,8 +406,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 
 		ImGui::Begin("Window");
-		ImGui::DragFloat2("cameraWorldRotate", &rotate.x, 0.01f);
-		ImGui::DragFloat3("cametaPosition", &cametaPosition.x, 0.01f);
 		ImGui::Checkbox("start", &isStart);
 		ImGui::End();
 
@@ -400,15 +414,28 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			ball.position += ball.velocity * deltaTime;
 		}
 		else {
-			ball.position = { 0.0f, 1.2f, 0.4f };
+			ball.position = { 0.8f, 1.2f, 0.3f };
 			ball.velocity = { 0.0f, 0.0f, 0.0f };
 		}
-		if (IsCollision(Sphere{ ball.position, ball.radius }, plane)) {
+		capsule.segment = { .origine = {ball.position}, .diff = {ball.velocity * deltaTime} };
+
+
+		Sphere nextSphere{ capsule.segment.origine + capsule.segment.diff, capsule.raadius };
+		float distance = sqrtf((Dot(plane.normal, nextSphere.center) - plane.distance) * (Dot(plane.normal, nextSphere.center) - plane.distance));
+		if (distance <= nextSphere.radius) {
+			ball.position += -plane.normal *(distance - nextSphere.radius);
 			Vector3 reflected = Reflect(ball.velocity, plane.normal);
 			Vector3 projectToNormal = Project(reflected, plane.normal);
 			Vector3 movingDirection = reflected - projectToNormal;
 			ball.velocity = projectToNormal * e + movingDirection;
 		}
+
+		/*if (IsCollision(Sphere{ ball.position, ball.radius }, plane)) {
+			Vector3 reflected = Reflect(ball.velocity, plane.normal);
+			Vector3 projectToNormal = Project(reflected, plane.normal);
+			Vector3 movingDirection = reflected - projectToNormal;
+			ball.velocity = projectToNormal * e + movingDirection;
+		}*/
 		
 		cameraMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, cametaPosition);
 		cameraMatrix = Multiply(cameraMatrix, MakeRotateXMatrix(rotate.x));
