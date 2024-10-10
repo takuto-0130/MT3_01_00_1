@@ -384,6 +384,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::Begin("Window");
 		ImGui::DragFloat2("cameraWorldRotate", &rotate.x, 0.01f);
 		ImGui::DragFloat3("cametaPosition", &cametaPosition.x, 0.01f);
+		ImGui::DragFloat3("center", &center.x, 0.01f);
+		ImGui::DragFloat3("p", &p.x, 0.01f);
 		if (ImGui::Button("start")) {
 			isStart = true;
 		}
