@@ -23,6 +23,33 @@ Matrix4x4 MakeRotateAxisAngle(const Vector3& axis, const float& angle) {
 	return result;
 }
 
+Matrix4x4 DirectionToDirection(const Vector3& from, const Vector3& to) {
+	Vector3 n = Normalize(Cross(from, to));
+	float cos = Dot(from, to);
+	float sin = Length(Cross(from, to));
+
+	if (cos < 0.0f && (from.x != 0 || from.y != 0)) {
+		n = Normalize(Vector3(from.x, -from.y, 0));
+	}
+
+	Matrix4x4 result = MakeIdentity4x4();
+	result.m[0][0] = n.x * n.x * (1.0f - cos) + cos;
+	result.m[0][1] = n.x * n.y * (1.0f - cos) + n.z * sin;
+	result.m[0][2] = n.x * n.z * (1.0f - cos) - n.y * sin;
+
+	result.m[1][0] = n.x * n.y * (1.0f - cos) - n.z * sin;
+	result.m[1][1] = n.y * n.y * (1.0f - cos) + cos;
+	result.m[1][2] = n.y * n.z * (1.0f - cos) + n.x * sin;
+
+	result.m[2][0] = n.x * n.z * (1.0f - cos) + n.y * sin;
+	result.m[2][1] = n.y * n.z * (1.0f - cos) - n.x * sin;
+	result.m[2][2] = n.z * n.z * (1.0f - cos) + cos;
+
+	return result;
+}
+
+
+
 static const int kRowHeight = 20;
 static const int kColumnWidth = 60;
 
@@ -45,10 +72,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// ライブラリの初期化
 	Novice::Initialize(kWindowTitle, 1280, 720);
 
-	Vector3 axis = Normalize({ 1.0f,1.0f,1.0f });
-	float angle = 0.44f;
+	Vector3 from0 = Normalize(Vector3(1.0f, 0.7f, 0.5f));
+	Vector3 to0 = -from0;
+	Vector3 from1 = Normalize(Vector3(-0.6f, 0.9f, 0.2f));
+	Vector3 to1 = Normalize(Vector3(0.4f, 0.7f, -0.5f));
 
-	Matrix4x4 rotateMatrix = MakeRotateAxisAngle(axis, angle);
+	Matrix4x4 rotateMatrix0 = DirectionToDirection(
+		Normalize(Vector3(1.0f,0.0f,0.0f)), Normalize(Vector3(-1.0f, 0.0f, 0.0f)));
+
+	Matrix4x4 rotateMatrix1 = DirectionToDirection(from0, to0);
+	Matrix4x4 rotateMatrix2 = DirectionToDirection(from1, to1);
 
 	// キー入力結果を受け取る箱
 	char keys[256] = { 0 };
@@ -78,7 +111,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 
-		MatrixScreenPrintf(0, 0, rotateMatrix, "rotateMatrix");
+		MatrixScreenPrintf(0, 0, rotateMatrix0, "rotateMatrix0");
+		MatrixScreenPrintf(0, kRowHeight * 5, rotateMatrix1, "rotateMatrix1");
+		MatrixScreenPrintf(0, kRowHeight * 10, rotateMatrix2, "rotateMatrix2");
 
 		///
 		/// ↑描画処理ここまで
