@@ -89,18 +89,29 @@ Matrix4x4 MakeRotateMatrix(const Quaternion& q) {
 	result.m[2][2] = 1.0f - 2.0f * (q.x * q.x + q.y * q.y);
 	return result;
 }
-#pragma endregion
 
 float Dot(const Quaternion& q0, const Quaternion& q1) {
 	return q0.x * q1.x + q0.y * q1.y + q0.z * q1.z + q0.w * q1.w;
 }
 
+Quaternion Multiply(const Quaternion& q, const float f) {
+	return { q.x * f, q.y * f, q.z * f, q.w * f };
+}
+
+Quaternion Add(const Quaternion& q0, const Quaternion& q1) {
+	return { q0.x + q1.x, q0.y + q1.y, q0.z + q1.z, q0.w + q1.w };
+}
+
 Quaternion Slerp(const Quaternion& q0, const Quaternion& q1, float t) {
+	const float EPSILON = 0.0005f;
 	float dot = Dot(q0, q1);
 	Quaternion q0cul = q0;
 	if (dot < 0) {
 		q0cul = { -q0.x, -q0.y, -q0.z,-q0.w };
 		dot = -dot;
+	}
+	if (dot >= 1.0f - EPSILON) {
+		return Add(Multiply(q0cul, (1.0f - t)), Multiply(q1, t));
 	}
 	float theta = std::acosf(dot);
 	float q0num = std::sinf((1 - t) * theta) / std::sinf(theta);
@@ -109,6 +120,7 @@ Quaternion Slerp(const Quaternion& q0, const Quaternion& q1, float t) {
 		q0num * q0cul.z + q1num * q1.z, q0num * q0cul.w + q1num * q1.w };
 	return result;
 }
+#pragma endregion
 
 
 
@@ -137,7 +149,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	
 	Quaternion rotation0 = MakeRotateAxisAngleQuaternion(Vector3{ 0.71f, 0.71f, 0.0f }, 0.3f);
-	Quaternion rotation1 = MakeRotateAxisAngleQuaternion(Vector3{ 0.71f, 0.0f, 0.71f }, 3.141592f);
+	Quaternion rotation1 = { -rotation0.x, -rotation0.y, -rotation0.z, -rotation0.w };
 
 	Quaternion interpolate0 = Slerp(rotation0, rotation1, 0.0f);
 	Quaternion interpolate1 = Slerp(rotation0, rotation1, 0.3f);
