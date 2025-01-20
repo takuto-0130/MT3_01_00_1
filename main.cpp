@@ -55,7 +55,6 @@ Quaternion Inverse(const Quaternion& quaternion) {
 	qr = { qr.x / (norm * norm), qr.y / (norm * norm), qr.z / (norm * norm), qr.w / (norm * norm) };
 	return qr;
 };
-#pragma endregion
 
 Quaternion MakeRotateAxisAngleQuaternion(const Vector3& vec, const float theta) {
 	Quaternion q = IdentityQuaternion();
@@ -76,20 +75,42 @@ Vector3 RotateVector(const Vector3& v, const Quaternion& q) {
 }
 
 Matrix4x4 MakeRotateMatrix(const Quaternion& q) {
-	Matrix4x4 R = MakeIdentity4x4();
-	R.m[0][0] = 1.0f - 2.0f * (q.y * q.y + q.z * q.z);
-	R.m[0][1] = 2 * (q.x * q.y + q.w * q.z);
-	R.m[0][2] = 2 * (q.x * q.z - q.w * q.y);
+	Matrix4x4 result = MakeIdentity4x4();
+	result.m[0][0] = 1.0f - 2.0f * (q.y * q.y + q.z * q.z);
+	result.m[0][1] = 2 * (q.x * q.y + q.w * q.z);
+	result.m[0][2] = 2 * (q.x * q.z - q.w * q.y);
 
-	R.m[1][0] = 2 * (q.x * q.y - q.w * q.z);
-	R.m[1][1] = 1.0f - 2.0f * (q.x * q.x + q.z * q.z);
-	R.m[1][2] = 2 * (q.y * q.z + q.w * q.x);
+	result.m[1][0] = 2 * (q.x * q.y - q.w * q.z);
+	result.m[1][1] = 1.0f - 2.0f * (q.x * q.x + q.z * q.z);
+	result.m[1][2] = 2 * (q.y * q.z + q.w * q.x);
 
-	R.m[2][0] = 2 * (q.x * q.z + q.w * q.y);
-	R.m[2][1] = 2 * (q.y * q.z - q.w * q.x);
-	R.m[2][2] =1.0f - 2.0f * (q.x * q.x + q.y * q.y);
-	return R;
+	result.m[2][0] = 2 * (q.x * q.z + q.w * q.y);
+	result.m[2][1] = 2 * (q.y * q.z - q.w * q.x);
+	result.m[2][2] = 1.0f - 2.0f * (q.x * q.x + q.y * q.y);
+	return result;
 }
+#pragma endregion
+
+float Dot(const Quaternion& q0, const Quaternion& q1) {
+	return q0.x * q1.x + q0.y * q1.y + q0.z * q1.z + q0.w * q1.w;
+}
+
+Quaternion Slerp(const Quaternion& q0, const Quaternion& q1, float t) {
+	float dot = Dot(q0, q1);
+	Quaternion q0cul = q0;
+	if (dot < 0) {
+		q0cul = { -q0.x, -q0.y, -q0.z,-q0.w };
+		dot = -dot;
+	}
+	float theta = std::acosf(dot);
+	float q0num = std::sinf((1 - t) * theta) / std::sinf(theta);
+	float q1num = std::sinf(t * theta) / std::sinf(theta);
+	Quaternion result = { q0num * q0cul.x + q1num * q1.x, q0num * q0cul.y + q1num * q1.y,
+		q0num * q0cul.z + q1num * q1.z, q0num * q0cul.w + q1num * q1.w };
+	return result;
+}
+
+
 
 static const int kRowHeight = 20;
 static const int kColumnWidth = 60;
@@ -115,11 +136,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Novice::Initialize(kWindowTitle, 1280, 720);
 
 	
-	Quaternion rotation = MakeRotateAxisAngleQuaternion(Vector3{ 1.0f,0.4f,-0.2f }, 0.45f);
-	Vector3 pointY = { 2.1f,-0.9f,1.3f };
-	Matrix4x4 rotateMatrix = MakeRotateMatrix(rotation);
-	Vector3 rotateByQuaternion = RotateVector(pointY, rotation);
-	Vector3 rotateByMatrix = Transform(pointY, rotateMatrix);
+	Quaternion rotation0 = MakeRotateAxisAngleQuaternion(Vector3{ 0.71f, 0.71f, 0.0f }, 0.3f);
+	Quaternion rotation1 = MakeRotateAxisAngleQuaternion(Vector3{ 0.71f, 0.0f, 0.71f }, 3.141592f);
+
+	Quaternion interpolate0 = Slerp(rotation0, rotation1, 0.0f);
+	Quaternion interpolate1 = Slerp(rotation0, rotation1, 0.3f);
+	Quaternion interpolate2 = Slerp(rotation0, rotation1, 0.5f);
+	Quaternion interpolate3 = Slerp(rotation0, rotation1, 0.7f);
+	Quaternion interpolate4 = Slerp(rotation0, rotation1, 1.0f);
 
 	// キー入力結果を受け取る箱
 	char keys[256] = { 0 };
@@ -149,11 +173,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 		
-		Novice::ScreenPrintf(0, 0, "%5.2f %5.2f %5.2f %5.2f   : rotation", rotation.x, rotation.y, rotation.z, rotation.w);
-		MatrixScreenPrintf(0, 20, rotateMatrix, "rotateMatrix");
-
-		Novice::ScreenPrintf(0, 120, "%5.2f %5.2f %5.2f    : rotateByQuaternion", rotateByQuaternion.x, rotateByQuaternion.y, rotateByQuaternion.z);
-		Novice::ScreenPrintf(0, 140, "%5.2f %5.2f %5.2f    : rotateByMatrix", rotateByMatrix.x, rotateByMatrix.y, rotateByMatrix.z);
+		Novice::ScreenPrintf(0, 0, "%5.2f %5.2f %5.2f %5.2f   : interpolate0", interpolate0.x, interpolate0.y, interpolate0.z, interpolate0.w);
+		Novice::ScreenPrintf(0, 20, "%5.2f %5.2f %5.2f %5.2f   : interpolate1", interpolate1.x, interpolate1.y, interpolate1.z, interpolate1.w);
+		Novice::ScreenPrintf(0, 40, "%5.2f %5.2f %5.2f %5.2f   : interpolate2", interpolate2.x, interpolate2.y, interpolate2.z, interpolate2.w);
+		Novice::ScreenPrintf(0, 60, "%5.2f %5.2f %5.2f %5.2f   : interpolate3", interpolate3.x, interpolate3.y, interpolate3.z, interpolate3.w);
+		Novice::ScreenPrintf(0, 80, "%5.2f %5.2f %5.2f %5.2f   : interpolate4", interpolate4.x, interpolate4.y, interpolate4.z, interpolate4.w);
 		/*Novice::ScreenPrintf(0, 0, "%5.2f %5.2f %5.2f %5.2f   : Identity", identity.x, identity.y, identity.z, identity.w);
 		Novice::ScreenPrintf(0, 20, "%5.2f %5.2f %5.2f %5.2f   : Conjugate", conj.x, conj.y, conj.z, conj.w);
 		Novice::ScreenPrintf(0, 40, "%5.2f %5.2f %5.2f %5.2f   : Inverse", inv.x, inv.y, inv.z, inv.w);*/
