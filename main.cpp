@@ -77,44 +77,32 @@ Vector3 RotateVector(const Vector3& v, const Quaternion& q) {
 
 Matrix4x4 MakeRotateMatrix(const Quaternion& q) {
 	Matrix4x4 R = MakeIdentity4x4();
-	/*R.m[0][0] = q.w * q.w + q.x * q.x - q.y * q.y - q.z * q.z;
+	R.m[0][0] = 1.0f - 2.0f * (q.y * q.y + q.z * q.z);
 	R.m[0][1] = 2 * (q.x * q.y + q.w * q.z);
 	R.m[0][2] = 2 * (q.x * q.z - q.w * q.y);
 
-	R.m[0][0] = 2 * (q.x * q.y - q.w * q.z);
-	R.m[0][1] = q.w * q.w - q.x * q.x + q.y * q.y - q.z * q.z;
-	R.m[0][2] = 2 * (q.y * q.z + q.w * q.x);
+	R.m[1][0] = 2 * (q.x * q.y - q.w * q.z);
+	R.m[1][1] = 1.0f - 2.0f * (q.x * q.x + q.z * q.z);
+	R.m[1][2] = 2 * (q.y * q.z + q.w * q.x);
 
-	R.m[0][0] = 2 * (q.x * q.z + q.w * q.y);
-	R.m[0][1] = 2 * (q.y * q.z - q.w * q.x);
-	R.m[0][2] = q.w * q.w - q.x * q.x - q.y * q.y + q.z * q.z;*/
-	// クォータニオンの成分
-	float x = q.x;
-	float y = q.y;
-	float z = q.z;
-	float w = q.w;
-
-	// 回転行列の計算
-	R.m[0][0] = 1.0f - 2.0f * (y * y + z * z);
-	R.m[0][1] = 2.0f * (x * y - w * z);
-	R.m[0][2] = 2.0f * (x * z + w * y);
-	R.m[0][3] = 0.0f;
-
-	R.m[1][0] = 2.0f * (x * y + w * z);
-	R.m[1][1] = 1.0f - 2.0f * (x * x + z * z);
-	R.m[1][2] = 2.0f * (y * z - w * x);
-	R.m[1][3] = 0.0f;
-
-	R.m[2][0] = 2.0f * (x * z - w * y);
-	R.m[2][1] = 2.0f * (y * z + w * x);
-	R.m[2][2] = 1.0f - 2.0f * (x * x + y * y);
-	R.m[2][3] = 0.0f;
-
-	R.m[3][0] = 0.0f;
-	R.m[3][1] = 0.0f;
-	R.m[3][2] = 0.0f;
-	R.m[3][3] = 1.0f;
+	R.m[2][0] = 2 * (q.x * q.z + q.w * q.y);
+	R.m[2][1] = 2 * (q.y * q.z - q.w * q.x);
+	R.m[2][2] =1.0f - 2.0f * (q.x * q.x + q.y * q.y);
 	return R;
+}
+
+static const int kRowHeight = 20;
+static const int kColumnWidth = 60;
+
+
+void MatrixScreenPrintf(int x, int y, Matrix4x4 matrix, const char* text) {
+	Novice::ScreenPrintf(x, y, "%s", text);
+	for (int row = 0; row < 4; ++row) {
+		for (int column = 0; column < 4; ++column) {
+			Novice::ScreenPrintf(x + column * kColumnWidth,
+				y + (row + 1) * kRowHeight, "%6.3f", matrix.m[row][column]);
+		}
+	}
 }
 
 
@@ -162,10 +150,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		
 		Novice::ScreenPrintf(0, 0, "%5.2f %5.2f %5.2f %5.2f   : rotation", rotation.x, rotation.y, rotation.z, rotation.w);
+		MatrixScreenPrintf(0, 20, rotateMatrix, "rotateMatrix");
 
-
-		Novice::ScreenPrintf(0, 100, "%5.2f %5.2f %5.2f    : rotateByQuaternion", rotateByQuaternion.x, rotateByQuaternion.y, rotateByQuaternion.z);
-		Novice::ScreenPrintf(0, 120, "%5.2f %5.2f %5.2f    : rotateByMatrix", rotateByMatrix.x, rotateByMatrix.y, rotateByMatrix.z);
+		Novice::ScreenPrintf(0, 120, "%5.2f %5.2f %5.2f    : rotateByQuaternion", rotateByQuaternion.x, rotateByQuaternion.y, rotateByQuaternion.z);
+		Novice::ScreenPrintf(0, 140, "%5.2f %5.2f %5.2f    : rotateByMatrix", rotateByMatrix.x, rotateByMatrix.y, rotateByMatrix.z);
 		/*Novice::ScreenPrintf(0, 0, "%5.2f %5.2f %5.2f %5.2f   : Identity", identity.x, identity.y, identity.z, identity.w);
 		Novice::ScreenPrintf(0, 20, "%5.2f %5.2f %5.2f %5.2f   : Conjugate", conj.x, conj.y, conj.z, conj.w);
 		Novice::ScreenPrintf(0, 40, "%5.2f %5.2f %5.2f %5.2f   : Inverse", inv.x, inv.y, inv.z, inv.w);*/
