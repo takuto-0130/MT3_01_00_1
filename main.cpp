@@ -106,18 +106,27 @@ Quaternion Slerp(const Quaternion& q0, const Quaternion& q1, float t) {
 	const float EPSILON = 0.0005f;
 	float dot = Dot(q0, q1);
 	Quaternion q0cul = q0;
+
 	if (dot < 0) {
 		q0cul = { -q0.x, -q0.y, -q0.z,-q0.w };
 		dot = -dot;
 	}
+
 	if (dot >= 1.0f - EPSILON) {
 		return Add(Multiply(q0cul, (1.0f - t)), Multiply(q1, t));
 	}
+
 	float theta = std::acosf(dot);
 	float q0num = std::sinf((1 - t) * theta) / std::sinf(theta);
 	float q1num = std::sinf(t * theta) / std::sinf(theta);
-	Quaternion result = { q0num * q0cul.x + q1num * q1.x, q0num * q0cul.y + q1num * q1.y,
-		q0num * q0cul.z + q1num * q1.z, q0num * q0cul.w + q1num * q1.w };
+
+	Quaternion result = { 
+		q0num * q0cul.x + q1num * q1.x, 
+		q0num * q0cul.y + q1num * q1.y,
+		q0num * q0cul.z + q1num * q1.z, 
+		q0num * q0cul.w + q1num * q1.w 
+	};
+
 	return result;
 }
 #pragma endregion
